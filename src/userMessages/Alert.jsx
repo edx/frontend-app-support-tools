@@ -2,10 +2,12 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import {
-  faExclamationTriangle, faInfoCircle, faCheckCircle, faMinusCircle, faTimes,
+  faExclamationTriangle, faInfoCircle, faCheckCircle, faExclamationCircle,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Button } from '@openedx/paragon';
+import { FormattedMessage } from '@edx/frontend-platform/i18n';
+import messages from '../CourseTeamManagement/messages';
 
 function getAlertClass(type) {
   if (type === 'error') {
@@ -25,7 +27,7 @@ function getAlertIcon(type) {
     return faExclamationTriangle;
   }
   if (type === 'danger') {
-    return faMinusCircle;
+    return faExclamationCircle;
   }
   if (type === 'success') {
     return faCheckCircle;
@@ -45,8 +47,8 @@ function Alert({
         <div role="alert" className="flex-grow-1">
           {children}
         </div>
+        {dismissible && <Button variant="link" size="inline" className="dismiss-button" onClick={onDismiss}><FormattedMessage {...messages.alertDismissBtnText} /></Button>}
       </div>
-      {dismissible && <Button className="close" onClick={onDismiss}><FontAwesomeIcon size="sm" icon={faTimes} /></Button>}
     </div>
   );
 }
