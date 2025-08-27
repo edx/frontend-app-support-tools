@@ -119,9 +119,9 @@ export default function CoursesTable({
 
     // Manual Filtering for all columns in single search box
     data = data.filter(
-      (row) => (row.course_name.toLowerCase().includes(search.toLowerCase())
-          || row.number.toLowerCase().includes(search.toLowerCase())
-          || row.run.toLowerCase().includes(search.toLowerCase())
+      (row) => ((row.course_name || '').toLowerCase().includes(search.toLowerCase())
+          || (row.number || '').toLowerCase().includes(search.toLowerCase())
+          || (row.run || '').toLowerCase().includes(search.toLowerCase())
       )
       && (status === '' || row.status === status)
       && (org === '' || row.org === org),
