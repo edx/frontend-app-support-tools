@@ -54,10 +54,6 @@
         display: none;
     }
 
-    .pgn__data-table-cell-wrap {
-        overflow: visible;
-    }
-
     .pgn__table-actions,
     .pgn__data-table-actions-right,
     .pgn__data-table-actions {
@@ -79,7 +75,7 @@
     }
 
     table {
-        overflow:scroll;
+        overflow: scroll;
         width: 100%;
 
         thead {
@@ -95,6 +91,10 @@
         }
     }
 
+    th, td {
+        white-space: nowrap;
+    }
+
     th:nth-child(1),
     td:nth-child(1) {
         width: 3%;
@@ -102,7 +102,7 @@
 
     th:nth-child(2),
     td:nth-child(2) {
-        width: 45%;
+        width: 40%;
     }
 
     th:nth-child(3),
@@ -137,9 +137,10 @@
         position: relative;
 
         .course-team-table-org-filter-btn {
+            max-width: 240px;
             white-space: nowrap;
-            overflow: 'hidden';
-            text-overflow: 'ellipsis';
+            overflow: hidden;
+            text-overflow: ellipsis;
             margin-right: 8px;
         }
 
@@ -150,6 +151,11 @@
             width: 320px;
             max-height: 250px;
             overflow-y: auto;
+
+            .dropdown-item {
+                white-space: normal !important;
+                word-break: break-word;
+            }
         }
     }
 }
