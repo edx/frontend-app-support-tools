@@ -28,9 +28,13 @@ export default function ChangeEnrollmentForm({
 
   const getModes = () => {
     const modeList = [];
-    modeList.push({ label: 'New Mode', value: '', disabled: true });
+    modeList.push({ label: 'New Mode', value: enrollment.mode, disabled: true });
     enrollment.courseModes.map(enrollmentMode => (
-      !(enrollmentMode.slug === enrollment.mode) && modeList.push(enrollmentMode.slug)
+      !(enrollmentMode.slug === enrollment.mode) && modeList.push({ 
+        label: enrollmentMode.slug,
+        value: enrollmentMode.slug,
+        disabled: false 
+      })
     ));
     return modeList;
   };
@@ -100,13 +104,13 @@ export default function ChangeEnrollmentForm({
         <hr />
 
         <Form.Control
-          className="mb-n3"
+          className="mb-4"
           as="select"
           options={getModes()}
-          value=""
+          value={mode}
           id="mode"
           name="mode"
-          onChange={(event) => setMode(event)}
+          onChange={(event) => setMode(event.target.value)}
           disabled={hideOnSubmit}
         >
           {getModes().map(({ label, value, disabled }) => <option value={value} disabled={disabled}>{label}</option>)}
@@ -116,8 +120,8 @@ export default function ChangeEnrollmentForm({
           as="select"
           id="reason"
           name="reason"
-          value=""
-          onChange={(event) => setReason(event)}
+          value={reason}
+          onChange={(event) => setReason(event.target.value)}
           disabled={hideOnSubmit}
         >
           {reasons.map(({ label, value, disabled }) => <option value={value} disabled={disabled}>{label}</option>)}
