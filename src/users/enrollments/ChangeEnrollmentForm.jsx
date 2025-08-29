@@ -42,6 +42,7 @@ export default function ChangeEnrollmentForm({
   const submit = useCallback(() => {
     clear('changeEnrollments');
     setShowLoader(true);
+    setHideOnSubmit(true);
     const sendReason = (reason === 'other') ? comments : reason;
     patchEnrollment({
       user,
@@ -52,6 +53,7 @@ export default function ChangeEnrollmentForm({
     }).then((result) => {
       if (result.errors !== undefined) {
         result.errors.forEach(error => add(error));
+        setHideOnSubmit(false);
       } else {
         const successMessage = {
           code: null,
@@ -60,7 +62,6 @@ export default function ChangeEnrollmentForm({
           type: 'success',
           topic: 'changeEnrollments',
         };
-        setHideOnSubmit(true);
         add(successMessage);
         changeHandler();
       }

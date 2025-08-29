@@ -21,12 +21,14 @@ export default function CreateEnrollmentForm({
   const [reason, setReason] = useState('');
   const [comments, setComments] = useState('');
   const [modalIsOpen, setModalIsOpen] = useState(true);
+  const [hideOnSubmit, setHideOnSubmit] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
   const { add, clear } = useContext(UserMessagesContext);
 
   const submit = useCallback(() => {
     clear('createEnrollments');
     setShowLoader(true);
+    setHideOnSubmit(true);
     const sendReason = (reason === 'other') ? comments : reason;
     postEnrollment({
       user,
@@ -36,6 +38,7 @@ export default function CreateEnrollmentForm({
     }).then((result) => {
       if (result.errors !== undefined) {
         result.errors.forEach(error => add(error));
+        setHideOnSubmit(false);
       } else {
         const successMessage = {
           code: null,
@@ -59,16 +62,19 @@ export default function CreateEnrollmentForm({
           id="courseID"
           name="courseID"
           placeholder="Course Run ID"
+          className="mb-4"
           onChange={(event) => setCourseID(event.target.value)}
+          disabled={hideOnSubmit}
           ref={forwardedRef}
         />
         <Form.Control
-          className="mb-n3 small"
+          className="mb-4 small"
           as="select"
           id="mode"
           name="mode"
-          value=""
-          onChange={(event) => setMode(event)}
+          value={mode}
+          onChange={(event) => setMode(event.target.value)}
+          disabled={hideOnSubmit}
         >
           {modes.map(({ label, value, disabled }) => <option value={value} disabled={disabled}>{label}</option>)}
         </Form.Control>
@@ -77,8 +83,9 @@ export default function CreateEnrollmentForm({
           as="select"
           id="reason"
           name="reason"
-          value=""
-          onChange={(event) => setReason(event)}
+          value={reason}
+          onChange={(event) => setReason(event.target.value)}
+          disabled={hideOnSubmit}
         >
           {reasons.map(({ label, value, disabled }) => <option value={value} disabled={disabled}>{label}</option>)}
         </Form.Control>
@@ -89,6 +96,7 @@ export default function CreateEnrollmentForm({
           name="comments"
           defaultValue=""
           onChange={(event) => setComments(event.target.value)}
+          disabled={hideOnSubmit}
         />
       </div>
     </form>
@@ -129,6 +137,7 @@ export default function CreateEnrollmentForm({
                 disabled={!(courseID && reason)}
                 className="mr-3"
                 onClick={submit}
+                hidden={hideOnSubmit}
               >
                 Submit
               </Button>
