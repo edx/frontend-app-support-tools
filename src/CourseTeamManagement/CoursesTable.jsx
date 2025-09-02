@@ -366,6 +366,10 @@ export default function CoursesTable({
         <p>{intl.formatMessage(messages.courseAccessDescription)}</p>
       </div>
       <DataTable
+        isPaginated
+        initialState={{
+          pageSize: 100,
+        }}
         isSortable
         manualSortBy
         sortBy={sortBy}

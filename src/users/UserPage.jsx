@@ -58,6 +58,7 @@ export default function UserPage({
   const [loading, setLoading] = useState(false);
   const [userCourses, setUserCourses] = useState([]);
   const { add, clear } = useContext(UserMessagesContext);
+  const [displayCoursesTableLoading, setDisplayCoursesTableLoading] = useState(false);
 
   function pushHistoryIfChanged(nextUrl) {
     if (nextUrl !== location.pathname + location.search) {
@@ -152,10 +153,12 @@ export default function UserPage({
   const loadUserCourses = () => {
     if (!data?.user?.email) { return; }
     setUserCourses([]);
+    setDisplayCoursesTableLoading(true);
     fetchUserRoleBasedCourses(data.user.email, intl).then((response) => {
       if (response?.error) {
         setApiErrors(response);
       } else {
+        setDisplayCoursesTableLoading(false);
         setUserCourses(response);
       }
     });
@@ -199,7 +202,7 @@ export default function UserPage({
         isOnCourseTeamPage={isOnCourseTeamPage}
         username={data?.user?.username}
       />
-      {loading && <PageLoading srMessage="Loading" />}
+      {(loading || displayCoursesTableLoading) && <PageLoading srMessage="Loading" />}
       {showNoUserSelectedDescription && (
         <div className="course-team-management-no-user-selected">
           <h3>{intl.formatMessage(messages.noUserSelected)}</h3>
