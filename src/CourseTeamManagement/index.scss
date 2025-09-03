@@ -45,6 +45,12 @@
 }
 
 .course-team-management-courses-table {
+    .pgn__data-table-row {
+        td {
+            overflow: visible;
+        }
+    }
+
     .pgn__data-table-actions-left {
         display: none;
     }
