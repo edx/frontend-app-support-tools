@@ -145,7 +145,7 @@ export default function CoursesTable({
     }
 
     return data;
-  }, [search, status, org, userCoursesData, rowRoles, sortBy]);
+  }, [search, status, org, sortBy]);
 
   // Focus the search input when the component mounts
   useEffect(() => {
