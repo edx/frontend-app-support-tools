@@ -128,7 +128,7 @@ const messages = defineMessages({
   },
   tableNoOfEntriesShowingLabel: {
     id: 'courseTeamManagementTableNoOfEntriesShowingLabel',
-    defaultMessage: 'Showing 1 - {sortedAndFilteredDataLength} of {userCoursesDataLength}.',
+    defaultMessage: 'Showing {startItemIndex} - {endItemIndex} of {totalFilteredItems}.',
     description: 'Label for the number of entries showing in the table',
   },
   usernameOrEmailUserSearchPlaceholder: {

@@ -100,6 +100,10 @@ export default function CoursesTable({
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [org, setOrg] = useState('');
+  const [tableState, setTableState] = useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
   const [sortBy, setSortBy] = useState([{
     id: 'course_name',
     desc: false,
@@ -147,6 +151,22 @@ export default function CoursesTable({
     return data;
   }, [search, status, org, sortBy]);
 
+  const currentPageData = React.useMemo(() => {
+    const startIndex = tableState.pageIndex * tableState.pageSize;
+    const endIndex = startIndex + tableState.pageSize;
+    return sortedAndFilteredData.slice(startIndex, endIndex);
+  }, [sortedAndFilteredData, tableState.pageIndex, tableState.pageSize]);
+  const previousButton = document.querySelector('button.previous.page-link[aria-label*="Previous, Page"]');
+  const isLoading = currentPageData.length === 0 && previousButton && sortedAndFilteredData.length > 0;
+  useEffect(() => {
+    if (isLoading) {
+      // There wasn't any other solution provided by manual pagination props
+      // of DataTable to handle going back, if no record found after filteration
+      // on a certain page. So, had to manually go back to previous page with some records.
+      previousButton.click();
+    }
+  }, [currentPageData]);
+
   // Focus the search input when the component mounts
   useEffect(() => {
     if (searchInputRef.current) {
@@ -171,7 +191,7 @@ export default function CoursesTable({
 
   // Select all/clear all logic for header checkbox
   const headerCheckboxRef = useRef(null);
-  const allRowIds = sortedAndFilteredData.map((row) => row.course_id);
+  const allRowIds = currentPageData.map((row) => row.course_id);
   const numChecked = allRowIds.filter((id) => checkedRows[id]).length;
   const allChecked = numChecked === allRowIds.length && allRowIds.length > 0;
   const someChecked = numChecked > 0 && numChecked < allRowIds.length;
@@ -182,6 +202,7 @@ export default function CoursesTable({
       setIsAlertDismissed(false);
     }
   }, [
+    org,
     someChecked,
     allChecked,
     numChecked,
@@ -193,6 +214,7 @@ export default function CoursesTable({
     courseUpdateErrors,
     showErrorsModal,
     isAlertDismissed,
+    tableState,
   ]);
 
   useEffect(() => {
@@ -204,25 +226,13 @@ export default function CoursesTable({
   }, [checkedRows, rowRoles]);
 
   const handleHeaderCheckboxChange = () => {
-    if (allChecked) {
-      // Clear all
-      setCheckedRows((prev) => {
-        const updated = { ...prev };
-        allRowIds.forEach((id) => {
-          updated[id] = false;
-        });
-        return updated;
+    setCheckedRows((prev) => {
+      const updated = { ...prev };
+      currentPageData.forEach((row) => {
+        updated[row.course_id] = !allChecked;
       });
-    } else {
-      // Select all
-      setCheckedRows((prev) => {
-        const updated = { ...prev };
-        allRowIds.forEach((id) => {
-          updated[id] = true;
-        });
-        return updated;
-      });
-    }
+      return updated;
+    });
   };
 
   // Generate unique orgs for org filterChoices
@@ -310,7 +320,8 @@ export default function CoursesTable({
       setRowRoles={setRowRoles}
       sortedAndFilteredData={sortedAndFilteredData}
       checkedRows={checkedRows}
-      userCoursesData={userCoursesData}
+      currentPageData={currentPageData}
+      paginationState={tableState}
     />
   );
   // eslint-disable-next-line react/no-unstable-nested-components
@@ -366,18 +377,22 @@ export default function CoursesTable({
         <p>{intl.formatMessage(messages.courseAccessDescription)}</p>
       </div>
       <DataTable
+        isLoading={isLoading}
         isPaginated
-        initialState={{
-          pageSize: 100,
-        }}
+        manualPagination
+        state={tableState}
+        onStateChange={setTableState}
+        pageCount={Math.ceil(sortedAndFilteredData.length / tableState.pageSize)}
         isSortable
         manualSortBy
+        manualFilters
         sortBy={sortBy}
         onSortByChange={setSortBy}
         isFilterable
-        itemCount={userCoursesData.length}
+        itemCount={sortedAndFilteredData.length}
         tableActions={[tableActions]}
-        data={sortedAndFilteredData}
+        data={currentPageData}
+        fetchData={setTableState}
         columns={[
           {
             Header: CheckboxHeader,

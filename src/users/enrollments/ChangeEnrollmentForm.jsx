@@ -30,10 +30,10 @@ export default function ChangeEnrollmentForm({
     const modeList = [];
     modeList.push({ label: 'New Mode', value: enrollment.mode, disabled: true });
     enrollment.courseModes.map(enrollmentMode => (
-      !(enrollmentMode.slug === enrollment.mode) && modeList.push({ 
+      !(enrollmentMode.slug === enrollment.mode) && modeList.push({
         label: enrollmentMode.slug,
         value: enrollmentMode.slug,
-        disabled: false 
+        disabled: false,
       })
     ));
     return modeList;
