@@ -102,7 +102,7 @@ export default function CoursesTable({
   const [org, setOrg] = useState('');
   const [tableState, setTableState] = useState({
     pageIndex: 0,
-    pageSize: 10,
+    pageSize: 100,
   });
   const [sortBy, setSortBy] = useState([{
     id: 'course_name',
