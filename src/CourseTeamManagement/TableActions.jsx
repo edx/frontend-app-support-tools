@@ -31,7 +31,8 @@ const TableActions = ({
   setRowRoles,
   sortedAndFilteredData,
   checkedRows,
-  userCoursesData,
+  currentPageData,
+  paginationState,
 }) => {
   const intl = useIntl();
   let statusLabelMessage = messages.allCoursesFilterLabel;
@@ -40,6 +41,12 @@ const TableActions = ({
   } else if (status === ARCHIVED_COURSE_STATUS) {
     statusLabelMessage = messages.archivedCoursesFilterLabel;
   }
+
+  const { pageIndex, pageSize } = paginationState;
+  const totalFilteredItems = sortedAndFilteredData.length;
+
+  const startItemIndex = totalFilteredItems === 0 ? 0 : (pageIndex * pageSize) + 1;
+  const endItemIndex = Math.min(startItemIndex + pageSize - 1, totalFilteredItems);
 
   return (
     <div className="custom-table-actions-container">
@@ -97,7 +104,7 @@ const TableActions = ({
           }
           onSelect={(eventKey) => {
             if (eventKey === STAFF_ROLE || eventKey === INSTRUCTOR_ROLE) {
-              const filteredCourseIds = new Set(sortedAndFilteredData.map((row) => row.course_id));
+              const filteredCourseIds = new Set(currentPageData.map((row) => row.course_id));
               setRowRoles((prev) => {
                 const updated = { ...prev };
                 Object.keys(checkedRows).forEach((courseId) => {
@@ -126,8 +133,9 @@ const TableActions = ({
             intl.formatMessage(
               messages.tableNoOfEntriesShowingLabel,
               {
-                sortedAndFilteredDataLength: sortedAndFilteredData.length,
-                userCoursesDataLength: userCoursesData.length,
+                startItemIndex,
+                endItemIndex,
+                totalFilteredItems,
               },
             )
           }
@@ -153,7 +161,11 @@ TableActions.propTypes = {
     course_id: PropTypes.string.isRequired,
   })).isRequired,
   checkedRows: PropTypes.objectOf(PropTypes.bool).isRequired,
-  userCoursesData: PropTypes.arrayOf(PropTypes.shape({
+  currentPageData: PropTypes.arrayOf(PropTypes.shape({
     course_id: PropTypes.string.isRequired,
   })).isRequired,
+  paginationState: PropTypes.shape({
+    pageIndex: PropTypes.number.isRequired,
+    pageSize: PropTypes.number.isRequired,
+  }).isRequired,
 };

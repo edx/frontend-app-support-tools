@@ -46,7 +46,7 @@
 
 .course-team-management-courses-table {
     .pgn__data-table-row {
-        td {
+        td:nth-child(6) {
             overflow: visible;
         }
     }
