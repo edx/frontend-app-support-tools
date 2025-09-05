@@ -102,7 +102,7 @@ export default function CoursesTable({
   const [org, setOrg] = useState('');
   const [tableState, setTableState] = useState({
     pageIndex: 0,
-    pageSize: 10,
+    pageSize: 100,
   });
   const [sortBy, setSortBy] = useState([{
     id: 'course_name',
@@ -380,6 +380,7 @@ export default function CoursesTable({
         isLoading={isLoading}
         isPaginated
         manualPagination
+        initialState={tableState}
         state={tableState}
         onStateChange={setTableState}
         pageCount={Math.ceil(sortedAndFilteredData.length / tableState.pageSize)}
@@ -441,7 +442,7 @@ export default function CoursesTable({
       >
         <DataTable.TableControlBar />
         <div className="course-team-table-content-size">
-          {sortedAndFilteredData.length > 0 && <DataTable.Table />}
+          {sortedAndFilteredData.length > 0 && <DataTable.Table key={`dt-table-page-${tableState.pageIndex}`} />}
           {sortedAndFilteredData.length === 0 && (
             <div className="pgn__data-table-empty">{intl.formatMessage(messages.noResultsFoundForTable)}</div>
           )}
