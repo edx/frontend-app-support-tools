@@ -1,7 +1,7 @@
 import { getConfig } from '@edx/frontend-platform';
 import { isEmail, isValidLMSUserID, isValidUsername } from '../../utils/index';
 
-const { LMS_BASE_URL, CREDENTIALS_BASE_URL, ECOMMERCE_BASE_URL } = getConfig();
+const { LMS_BASE_URL, CREDENTIALS_BASE_URL } = getConfig();
 
 export const getEnrollmentsUrl = username => `${
   LMS_BASE_URL
@@ -106,6 +106,6 @@ export const getUserCredentialsUrl = () => `${CREDENTIALS_BASE_URL}/api/v2/crede
 
 export const getLearnerRecordsUrl = () => `${CREDENTIALS_BASE_URL}/records/api/v1/program_records`;
 
-export const getOrderHistoryUrl = () => (getConfig().COMMERCE_COORDINATOR_ORDER_HISTORY_URL || `${ECOMMERCE_BASE_URL}/api/v2/orders`);
+export const getOrderHistoryUrl = () => getConfig().COMMERCE_COORDINATOR_ORDER_HISTORY_URL;
 
 export const courseResetUrl = (username) => `${LMS_BASE_URL}/support/course_reset/${username}`;
