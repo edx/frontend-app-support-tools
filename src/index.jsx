@@ -121,6 +121,7 @@ initialize({
     config: () => {
       mergeConfig({
         COMMERCE_COORDINATOR_ORDER_DETAILS_URL: process.env.COMMERCE_COORDINATOR_ORDER_DETAILS_URL || null,
+        COMMERCE_COORDINATOR_ORDER_HISTORY_URL: process.env.COMMERCE_COORDINATOR_ORDER_HISTORY_URL || null,
         LICENSE_MANAGER_URL: process.env.LICENSE_MANAGER_URL || null,
         LICENSE_MANAGER_DJANGO_URL: process.env.LICENSE_MANAGER_DJANGO_URL || null,
         ADMIN_PORTAL_BASE_URL: process.env.ADMIN_PORTAL_BASE_URL || null,

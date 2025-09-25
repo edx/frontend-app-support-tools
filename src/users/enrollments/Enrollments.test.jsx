@@ -10,7 +10,6 @@ import * as api from '../data/api';
 jest.mock('@edx/frontend-platform', () => ({
   ...jest.requireActual('@edx/frontend-platform'),
   getConfig: jest.fn(() => ({
-    ECOMMERCE_BASE_URL: 'http://example.com',
     COMMERCE_COORDINATOR_ORDER_DETAILS_URL: 'http://example.com/coordinater/',
   })),
 }));
@@ -135,7 +134,6 @@ describe('Course Enrollments Listing', () => {
 
   it('Enterprise course enrollments table is not rendered if are no enterprise course enrollments', async () => {
     getConfig.mockReturnValue({
-      ECOMMERCE_BASE_URL: 'http://example.com',
       COMMERCE_COORDINATOR_ORDER_DETAILS_URL: null,
     });
     const mockEnrollments = [{

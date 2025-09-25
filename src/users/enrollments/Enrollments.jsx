@@ -215,9 +215,7 @@ export default function Enrollments({
         Cell: ({ value }) => (
           <a
             href={
-              getConfig().COMMERCE_COORDINATOR_ORDER_DETAILS_URL
-                ? `${getConfig().COMMERCE_COORDINATOR_ORDER_DETAILS_URL}/?order_number=${value}`
-                : `${getConfig().ECOMMERCE_BASE_URL}/dashboard/orders/${value}`
+              `${getConfig().COMMERCE_COORDINATOR_ORDER_DETAILS_URL}/?order_number=${value}`
             }
             rel="noopener noreferrer"
             target="_blank"

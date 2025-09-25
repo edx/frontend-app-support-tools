@@ -75,10 +75,8 @@ export default function Header() {
       content: 'Payment',
       submenuContent: (
         <>
-          <div className="mb-1"><a rel="noopener" href={`${config.ECOMMERCE_BASE_URL}/dashboard/users/`}>Otto</a></div>
-          <div className="mb-1"><a rel="noopener" href="https://ebc2.cybersource.com/ebc2/app/Home">Cybersource</a></div>
+          <div className="mb-1"><a rel="noopener" href="https://dashboard.stripe.com">Stripe</a></div>
           <div className="mb-1"><a rel="noopener" href="https://www.paypal.com/mep/dashboard">Paypal</a></div>
-          <div className="mb-1"><a rel="noopener" href={`${config.ECOMMERCE_BASE_URL}/enterprise/coupons/`}>Enterprise Coupons</a></div>
         </>
       ),
     },

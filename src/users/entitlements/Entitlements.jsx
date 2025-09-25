@@ -93,9 +93,7 @@ export default function Entitlements({
       orderNumber: (
         <a
           href={
-            getConfig().COMMERCE_COORDINATOR_ORDER_DETAILS_URL
-              ? `${getConfig().COMMERCE_COORDINATOR_ORDER_DETAILS_URL}/?order_number=${entitlement.orderNumber}`
-              : `${getConfig().ECOMMERCE_BASE_URL}/dashboard/orders/${entitlement.orderNumber}`
+            `${getConfig().COMMERCE_COORDINATOR_ORDER_DETAILS_URL}/?order_number=${entitlement.orderNumber}`
           }
           rel="noopener noreferrer"
           target="_blank"

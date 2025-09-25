@@ -2,23 +2,10 @@ import { useState } from 'react';
 import { camelCaseObject } from '@edx/frontend-platform/utils';
 import { logError } from '@edx/frontend-platform/logging';
 import { getConfig } from '@edx/frontend-platform';
-import EcommerceApiService from '../../../data/services/EcommerceApiService';
 import LicenseManagerApiService from '../../../data/services/LicenseManagerApiService';
 import LmsApiService from '../../../data/services/EnterpriseApiService';
 import dayjs from '../../Provisioning/data/dayjs';
 import fetchPaginatedData from '../../../data/services/utils';
-
-export const getEnterpriseOffers = async (enterpriseId) => {
-  const response = await EcommerceApiService.fetchEnterpriseOffers(enterpriseId);
-  const enterpriseOffers = camelCaseObject(response.data);
-  return enterpriseOffers;
-};
-
-export const getCouponOrders = async (enterpriseId, options) => {
-  const response = await EcommerceApiService.fetchCouponOrders(enterpriseId, options);
-  const couponOrders = camelCaseObject(response.data);
-  return couponOrders;
-};
 
 export const getCustomerSubscriptions = async (enterpriseId) => {
   const response = await LicenseManagerApiService.fetchCustomerSubscriptions(enterpriseId);

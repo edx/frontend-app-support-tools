@@ -1,8 +1,6 @@
 import { getAuthenticatedHttpClient } from '@edx/frontend-platform/auth';
 import { logError } from '@edx/frontend-platform/logging';
 import {
-  getEnterpriseOffers,
-  getCouponOrders,
   getCustomerSubscriptions,
   getSubsidies,
   getEnterpriseCustomer,
@@ -19,27 +17,6 @@ jest.mock('@edx/frontend-platform/logging', () => ({
 }));
 
 const TEST_ENTERPRISE_UUID = 'test-uuid';
-
-describe('getEnterpriseOffers', () => {
-  it('returns the correct data', async () => {
-    const offersResults = {
-      data: {
-        count: 1,
-        next: null,
-        previous: null,
-        results: [{
-          isCurrent: true,
-          uuid: 'uuid',
-        }],
-      },
-    };
-    getAuthenticatedHttpClient.mockImplementation(() => ({
-      get: jest.fn().mockResolvedValue(offersResults),
-    }));
-    const results = await getEnterpriseOffers(TEST_ENTERPRISE_UUID);
-    expect(results).toEqual(offersResults.data);
-  });
-});
 
 describe('getSubsidies', () => {
   it('returns the correct data', async () => {
@@ -72,30 +49,6 @@ describe('getSubsidies', () => {
     const results = await getSubsidies(TEST_ENTERPRISE_UUID);
     expect(results).toEqual([]);
     expect(logError).toHaveBeenCalled();
-  });
-});
-
-describe('getCouponOrders', () => {
-  it('returns the correct data', async () => {
-    const couponsResults = {
-      data: {
-        count: 1,
-        next: null,
-        previous: null,
-        results: [{
-          id: 1,
-          title: 'Enterprise Coupon',
-          startDate: '2022-03-16T00:00:00Z',
-          endDate: '2022-03-31T00:00:00Z',
-          available: false,
-        }],
-      },
-    };
-    getAuthenticatedHttpClient.mockImplementation(() => ({
-      get: jest.fn().mockResolvedValue(couponsResults),
-    }));
-    const results = await getCouponOrders(TEST_ENTERPRISE_UUID);
-    expect(results).toEqual(couponsResults.data);
   });
 });
 

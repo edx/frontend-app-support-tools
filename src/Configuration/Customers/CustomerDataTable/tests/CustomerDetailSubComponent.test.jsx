@@ -14,9 +14,7 @@ jest.mock('@edx/frontend-platform', () => ({
 
 jest.mock('@edx/frontend-platform', () => ({
   ...jest.requireActual('@edx/frontend-platform'),
-  getConfig: jest.fn(() => ({
-    ECOMMERCE_BASE_URL: 'www.ecommerce.com',
-  })),
+  getConfig: jest.fn(() => ({})),
 }));
 
 describe('CustomerDetailRowSubComponent', () => {
