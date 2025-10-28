@@ -36,7 +36,7 @@ describe('EnterpriseCustomerUserDetail', () => {
         },
       },
     };
-    render(<IntlProvider locale="en"><EnterpriseCustomerUserDetail row={pendingEnterpriseCustomerUser} /></IntlProvider>);
+    render(<EnterpriseCustomerUserDetail row={pendingEnterpriseCustomerUser} />);
     expect(screen.getByText('pending@customer.org')).toBeInTheDocument();
     expect(screen.queryByTestId('icon-hyperlink')).not.toBeInTheDocument();
     expect(screen.queryByTestId('username-email-hyperlink')).not.toBeInTheDocument();
@@ -51,7 +51,7 @@ describe('EnterpriseCustomerUserDetail', () => {
         roleAssignments: ['enterprise_learner'],
       },
     };
-    render(<IntlProvider locale="en"><AdministratorCell row={pendingAdmin} /></IntlProvider>);
+    render(<AdministratorCell row={pendingAdmin} />);
     expect(screen.getByText('Pending')).toBeInTheDocument();
   });
 
@@ -64,7 +64,7 @@ describe('EnterpriseCustomerUserDetail', () => {
         roleAssignments: ['enterprise_admin'],
       },
     };
-    render(<IntlProvider locale="en"><AdministratorCell row={adminRow} /></IntlProvider>);
+    render(<AdministratorCell row={adminRow} />);
     expect(screen.queryByText('Pending')).not.toBeInTheDocument();
   });
 
@@ -79,7 +79,7 @@ describe('EnterpriseCustomerUserDetail', () => {
         roleAssignments: ['enterprise_learner'],
       },
     };
-    render(<IntlProvider locale="en"><LearnerCell row={learnerRow} /></IntlProvider>);
+    render(<LearnerCell row={learnerRow} />);
     expect(screen.queryByText('Pending')).not.toBeInTheDocument();
   });
 
@@ -93,7 +93,7 @@ describe('EnterpriseCustomerUserDetail', () => {
         enterpriseCustomerUser: null,
       },
     };
-    render(<IntlProvider locale="en"><LearnerCell row={pendingLearnerRow} /></IntlProvider>);
+    render(<LearnerCell row={pendingLearnerRow} />);
     expect(screen.queryByText('Pending')).toBeInTheDocument();
   });
 });
