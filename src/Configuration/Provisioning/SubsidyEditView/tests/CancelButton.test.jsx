@@ -1,4 +1,4 @@
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/extend-expect';
 import PropTypes from 'prop-types';
 import { screen, waitFor } from '@testing-library/react';
 import Router from 'react-router-dom';

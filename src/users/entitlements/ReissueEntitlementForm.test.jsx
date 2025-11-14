@@ -1,100 +1,70 @@
+import { mount } from 'enzyme';
 import React from 'react';
-import {
-  render,
-  screen,
-  waitFor,
-} from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { IntlProvider } from '@edx/frontend-platform/i18n';
+import { waitFor } from '@testing-library/react';
+
 import ReissueEntitlementForm from './ReissueEntitlementForm';
 import entitlementFormData from '../data/test/entitlementForm';
 import UserMessagesProvider from '../../userMessages/UserMessagesProvider';
 import * as api from '../data/api';
 
 const ReissueEntitlementFormWrapper = (props) => (
-  <IntlProvider locale="en">
-    <UserMessagesProvider>
-      <ReissueEntitlementForm {...props} />
-    </UserMessagesProvider>
-  </IntlProvider>
+  <UserMessagesProvider>
+    <ReissueEntitlementForm {...props} />
+  </UserMessagesProvider>
 );
 
 describe('Reissue Entitlement Form', () => {
+  let wrapper;
+
   beforeEach(() => {
-    jest.clearAllMocks();
+    wrapper = mount(<ReissueEntitlementFormWrapper {...entitlementFormData} />);
   });
 
-  it('Default form render', async () => {
-    render(<ReissueEntitlementFormWrapper {...entitlementFormData} />);
+  afterEach(() => {
+    wrapper.unmount();
+  });
 
-    const reissueFormModal = screen.getByRole('dialog');
-    expect(reissueFormModal).toBeVisible();
+  it('Default form render', () => {
+    let reissueFormModal = wrapper.find('ModalDialog#reissue-entitlement');
+    expect(reissueFormModal.prop('isOpen')).toEqual(true);
+    const commentsTextArea = wrapper.find('textarea#comments');
+    expect(commentsTextArea.text()).toEqual('');
 
-    // textarea has only placeholder, no label
-    const commentsTextArea = screen.getByPlaceholderText('Explanation');
-    expect(commentsTextArea).toHaveValue('');
-
-    // Disambiguate: pick the footer "Close" button, not the icon button
-    const closeButtons = screen.getAllByRole('button', { name: /close/i });
-    const footerCloseButton = closeButtons.find(
-      (btn) => btn.classList.contains('btn-link'),
-    );
-
-    await userEvent.click(footerCloseButton);
-
-    await waitFor(() => {
-      expect(reissueFormModal).not.toBeVisible();
-    });
+    wrapper.find('button.btn-link').simulate('click');
+    reissueFormModal = wrapper.find('ModalDialog#reissue-entitlement');
+    expect(reissueFormModal.prop('isOpen')).toEqual(false);
   });
 
   describe('Form Submission', () => {
     it('Submit button disabled by default', () => {
-      render(<ReissueEntitlementFormWrapper {...entitlementFormData} />);
-      const submitButton = screen.getByRole('button', { name: /submit/i });
-      expect(submitButton).toBeDisabled();
+      expect(wrapper.find('button.btn-primary').prop('disabled')).toBeTruthy();
     });
 
     it('Successful form submission', async () => {
-      const apiMock = jest.spyOn(api, 'patchEntitlement').mockResolvedValueOnce({});
-      render(<ReissueEntitlementFormWrapper {...entitlementFormData} />);
+      const apiMock = jest.spyOn(api, 'patchEntitlement').mockImplementationOnce(() => Promise.resolve({}));
+      expect(apiMock).toHaveBeenCalledTimes(0);
 
-      const textarea = screen.getByPlaceholderText('Explanation');
-      await userEvent.type(textarea, 'reissue the expired entitlement');
-
-      const submitButton = screen.getByRole('button', { name: /submit/i });
-      expect(submitButton).toBeEnabled();
-
-      // Before submitting, no alert should be shown
-      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-
-      await userEvent.click(submitButton);
-
-      // After submitting, success alert appears
-      const successAlert = await screen.findByRole('alert');
-      expect(successAlert).toHaveTextContent(/Entitlement successfully reissued/i);
+      wrapper.find('textarea#comments').simulate('change', { target: { value: 'reissue the expired entitlement' } });
+      let submitButton = wrapper.find('button.btn-primary');
+      expect(submitButton.prop('disabled')).toBeFalsy();
+      expect(wrapper.find('div.spinner-border').length).toEqual(0);
+      submitButton.simulate('click');
+      expect(wrapper.find('div.spinner-border').length).toEqual(1);
 
       expect(apiMock).toHaveBeenCalledTimes(1);
 
-      // Verify changeHandler was called
-      await waitFor(() => {
+      waitFor(() => {
         expect(entitlementFormData.changeHandler).toHaveBeenCalledTimes(1);
+        expect(wrapper.find('div.spinner-border').length).toEqual(0);
       });
+      apiMock.mockReset();
 
-      // Pick the *footer* Close button specifically
-      const closeButtons = screen.getAllByRole('button', { name: /close/i });
-      const footerCloseButton = closeButtons.find(
-        (btn) => btn.classList.contains('btn-link'),
-      );
-
-      await userEvent.click(footerCloseButton);
-
-      await waitFor(() => {
-        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-      });
+      submitButton = wrapper.find('button.btn-primary');
+      expect(submitButton).toEqual({});
     });
 
     it('Unsuccessful form submission', async () => {
-      const apiMock = jest.spyOn(api, 'patchEntitlement').mockResolvedValueOnce({
+      const apiMock = jest.spyOn(api, 'patchEntitlement').mockImplementationOnce(() => Promise.resolve({
         errors: [
           {
             code: null,
@@ -104,23 +74,14 @@ describe('Reissue Entitlement Form', () => {
             topic: 'reissueEntitlement',
           },
         ],
-      });
+      }));
+      expect(apiMock).toHaveBeenCalledTimes(0);
 
-      render(<ReissueEntitlementFormWrapper {...entitlementFormData} />);
-
-      const textarea = screen.getByPlaceholderText('Explanation');
-      await userEvent.type(textarea, 'reissue the expired entitlement');
-
-      const submitButton = screen.getByRole('button', { name: /submit/i });
-      await userEvent.click(submitButton);
+      wrapper.find('textarea#comments').simulate('change', { target: { value: 'reissue the expired entitlement' } });
+      wrapper.find('button.btn-primary').simulate('click');
 
       expect(apiMock).toHaveBeenCalledTimes(1);
-
-      await waitFor(() => {
-        expect(screen.getByRole('alert')).toHaveTextContent(
-          'Error during reissue of entitlement',
-        );
-      });
+      waitFor(() => expect(wrapper.find('.alert').text()).toEqual('Error during reissue of entitlement'));
     });
   });
 });

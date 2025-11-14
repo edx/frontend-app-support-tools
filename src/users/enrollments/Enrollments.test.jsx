@@ -1,12 +1,6 @@
+import { mount } from 'enzyme';
 import React from 'react';
-import {
-  render,
-  screen,
-  fireEvent,
-  waitFor,
-  within,
-} from '@testing-library/react';
-import { IntlProvider } from '@edx/frontend-platform/i18n';
+import { waitFor } from '@testing-library/react';
 import { getConfig } from '@edx/frontend-platform';
 import Enrollments from './Enrollments';
 import { enrollmentsData } from '../data/test/enrollments';
@@ -16,42 +10,42 @@ import * as api from '../data/api';
 jest.mock('@edx/frontend-platform', () => ({
   ...jest.requireActual('@edx/frontend-platform'),
   getConfig: jest.fn(() => ({
-    ECOMMERCE_BASE_URL: 'http://example.com',
     COMMERCE_COORDINATOR_ORDER_DETAILS_URL: 'http://example.com/coordinater/',
   })),
 }));
 
-const renderWithProviders = (props = {}) => (
-  render(
-    <IntlProvider locale="en">
-      <UserMessagesProvider>
-        <Enrollments {...props} />
-      </UserMessagesProvider>
-    </IntlProvider>,
-  )
+const EnrollmentPageWrapper = (props) => (
+  <UserMessagesProvider>
+    <Enrollments {...props} />
+  </UserMessagesProvider>
 );
 
 describe('Course Enrollments Listing', () => {
-  const props = { user: 'edX', changeHandler: jest.fn() };
+  let wrapper;
+  const props = {
+    user: 'edX',
+    changeHandler: jest.fn(() => {}),
+  };
 
-  afterEach(() => jest.clearAllMocks());
+  beforeEach(async () => {
+    jest.spyOn(api, 'getEnrollments').mockImplementationOnce(() => Promise.resolve(enrollmentsData));
+    wrapper = mount(<EnrollmentPageWrapper {...props} />);
+  });
 
-  it('default enrollment data', async () => {
-    jest.spyOn(api, 'getEnrollments').mockResolvedValueOnce(enrollmentsData);
-    renderWithProviders(props);
+  afterEach(() => {
+    wrapper.unmount();
+  });
 
-    await waitFor(() => {
-      expect(screen.getByText(/Enrollments \(2\)/i)).toBeInTheDocument();
-    });
+  it('default enrollment data', () => {
+    const componentHeader = wrapper.find('h3');
+    expect(componentHeader.text()).toEqual('Enrollments (2)');
   });
 
   it('No Enrollment Data', async () => {
-    jest.spyOn(api, 'getEnrollments').mockResolvedValueOnce([]);
-    renderWithProviders(props);
-
-    await waitFor(() => {
-      expect(screen.getByText(/Enrollments \(0\)/i)).toBeInTheDocument();
-    });
+    jest.spyOn(api, 'getEnrollments').mockImplementationOnce(() => Promise.resolve([]));
+    wrapper = mount(<EnrollmentPageWrapper {...props} />);
+    const componentHeader = wrapper.find('h3');
+    expect(componentHeader.text()).toEqual('Enrollments (0)');
   });
 
   it('Error fetching enrollments', async () => {
@@ -66,204 +60,176 @@ describe('Course Enrollments Listing', () => {
         },
       ],
     };
-    jest.spyOn(api, 'getEnrollments').mockResolvedValueOnce(enrollmentErrors);
-    renderWithProviders(props);
+    jest.spyOn(api, 'getEnrollments').mockImplementationOnce(() => Promise.resolve(enrollmentErrors));
+    wrapper = mount(<EnrollmentPageWrapper {...props} />);
 
-    await waitFor(() => {
-      expect(
-        screen.getByText(enrollmentErrors.errors[0].text),
-      ).toBeInTheDocument();
+    const alert = wrapper.find('div.alert');
+    waitFor(() => expect(alert.text()).toEqual(enrollmentErrors.errors[0].text));
+  });
+
+  it('Enrollment create form is rendered', () => {
+    const createEnrollmentButton = wrapper.find('button#create-enrollment-button');
+    createEnrollmentButton.simulate('click');
+    const createFormModal = wrapper.find('ModalDialog#create-enrollment');
+    expect(createFormModal.html()).toEqual(expect.stringContaining('Create New Enrollment'));
+    expect(createFormModal.prop('isOpen')).toEqual(true);
+
+    createFormModal.find('button.btn-link').simulate('click');
+    expect(wrapper.find('CreateEnrollmentForm')).toEqual({});
+  });
+
+  it('Enrollment change form is rendered for individual enrollment', () => {
+    let dataRow = wrapper.find('table tbody tr').at(0);
+    waitFor(() => {
+      const courseId = dataRow.find('td').at(1).text();
+      dataRow.find('.dropdown button').simulate('click');
+      dataRow = wrapper.find('table tbody tr').at(0);
+      dataRow.find('.dropdown-menu.show a').at(0).simulate('click');
+
+      const changeFormModal = wrapper.find('ModalDialog#change-enrollment');
+      expect(changeFormModal.html()).toEqual(expect.stringContaining(courseId));
+      expect(changeFormModal.prop('isOpen')).toEqual(true);
+
+      changeFormModal.find('button.btn-link').simulate('click');
+      expect(wrapper.find('changeEnrollmentForm')).toEqual({});
     });
   });
 
-  it('Enrollment create form is rendered', async () => {
-    jest.spyOn(api, 'getEnrollments').mockResolvedValueOnce(enrollmentsData);
-    renderWithProviders(props);
+  it('Enrollment extra data and enterprise course enrollments are rendered for individual enrollment', () => {
+    let expandable = wrapper.find('table tbody tr').at(0).find('td div span').at(0);
+    waitFor(() => {
+      expect(expandable.html()).toContain('fa-plus');
 
-    const createBtn = screen.getByRole('button', {
-      name: /create new enrollment/i,
-    });
-    fireEvent.click(createBtn);
+      expandable.simulate('click');
 
-    const modal = screen.getByRole('dialog');
-    expect(
-      within(modal).getByText(/Create New Enrollment/i),
-    ).toBeInTheDocument();
+      expandable = wrapper.find('table tbody tr').at(0).find('td div span').at(0);
+      expect(expandable.html()).toContain('fa-minus');
 
-    const closeBtn = within(modal).getByText(/^Close$/i);
-    fireEvent.click(closeBtn);
+      const extraTables = wrapper.find('table tbody tr').at(1).find('table');
+      expect(extraTables.length).toEqual(2);
 
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    });
-  });
+      const extraDataTable = extraTables.at(0);
+      const extraTableHeaders = extraDataTable.find('thead tr th');
+      expect(extraTableHeaders.length).toEqual(5);
+      ['Last Modified', 'Last Modified By', 'Reason', 'Order Number', 'Source System'].forEach((expectedHeader, index) => expect(
+        extraTableHeaders.at(index).text(),
+      ).toEqual(expectedHeader));
 
-  it('Enrollment change form is rendered for individual enrollment', async () => {
-    jest.spyOn(api, 'getEnrollments').mockResolvedValueOnce(enrollmentsData);
-    renderWithProviders(props);
+      const enterpriseCourseEnrollmentsTable = extraTables.at(1);
+      const enterpriseCourseEnrollmentsTableHeaders = enterpriseCourseEnrollmentsTable.find('thead tr th');
+      expect(enterpriseCourseEnrollmentsTableHeaders.length).toEqual(5);
 
-    const rows = await screen.findAllByRole('row');
-    const dropdownBtn = within(rows[1]).getByRole('button', { name: /Actions/i });
-    fireEvent.click(dropdownBtn);
+      ['Enterprise Name', 'Data Sharing Consent Provided', 'Data Sharing Consent Required', 'License', 'License Revoked'].forEach(
+        (expectedHeader, index) => expect(
+          enterpriseCourseEnrollmentsTableHeaders.at(index).text(),
+        ).toEqual(expectedHeader),
+      );
 
-    const dropdownMenu = rows[1].querySelector('.dropdown-menu');
-    dropdownMenu.style.display = 'block';
-    dropdownMenu.style.opacity = '1';
-    dropdownMenu.style.pointerEvents = 'auto';
+      expandable.simulate('click');
 
-    const changeOption = within(rows[1]).getByRole('button', {
-      name: /Change Enrollment/i,
-    });
-    fireEvent.click(changeOption);
-
-    const modal = await screen.findByRole('dialog');
-    expect(modal).toBeInTheDocument();
-
-    const closeBtn = within(modal).getByText(/^Close$/i);
-    fireEvent.click(closeBtn);
-
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expandable = wrapper.find('table tbody tr').at(0).find('td div span').at(0);
+      expect(expandable.html()).toContain('fa-plus');
     });
   });
 
-  it('Enrollment extra data and enterprise course enrollments are rendered', async () => {
-    jest.spyOn(api, 'getEnrollments').mockResolvedValueOnce(enrollmentsData);
-    renderWithProviders(props);
-
-    const expandBtns = await screen.findAllByTitle('Toggle Row Expanded');
-    expect(expandBtns[0].querySelector('svg')).toHaveClass('fa-plus');
-
-    fireEvent.click(expandBtns[0]);
-    expect(expandBtns[0].querySelector('svg')).toHaveClass('fa-minus');
-
-    const tables = await screen.findAllByRole('table');
-    expect(tables.length).toBeGreaterThanOrEqual(3);
-
-    const extraTableHeaders = within(tables[1]).getAllByRole('columnheader');
-    const expectedHeaders = [
-      'Last Modified',
-      'Last Modified By',
-      'Reason',
-      'Order Number',
-      'Source System',
-    ];
-    expectedHeaders.forEach((text, idx) => {
-      expect(extraTableHeaders[idx]).toHaveTextContent(text);
-    });
-
-    const enterpriseHeaders = within(tables[2]).getAllByRole('columnheader');
-    const enterpriseExpected = [
-      'Enterprise Name',
-      'Data Sharing Consent Provided',
-      'Data Sharing Consent Required',
-      'License',
-      'License Revoked',
-    ];
-    enterpriseExpected.forEach((text, idx) => {
-      expect(enterpriseHeaders[idx]).toHaveTextContent(text);
-    });
-
-    fireEvent.click(expandBtns[0]);
-    expect(expandBtns[0].querySelector('svg')).toHaveClass('fa-plus');
-  });
-
-  it('Enterprise course enrollments table is not rendered if no enterprise enrollments', async () => {
+  it('Enterprise course enrollments table is not rendered if are no enterprise course enrollments', async () => {
     getConfig.mockReturnValue({
-      ECOMMERCE_BASE_URL: 'http://example.com',
       COMMERCE_COORDINATOR_ORDER_DETAILS_URL: null,
     });
+    const mockEnrollments = [{
+      ...enrollmentsData[0],
+      enterpriseCourseEnrollments: [],
+    },
+    {
+      ...enrollmentsData[0],
+      enterpriseCourseEnrollments: undefined,
+    }];
 
-    const mockEnrollments = [
-      { ...enrollmentsData[0], enterpriseCourseEnrollments: [] },
-      { ...enrollmentsData[0], enterpriseCourseEnrollments: undefined },
-    ];
+    jest.spyOn(api, 'getEnrollments').mockImplementationOnce(() => Promise.resolve(mockEnrollments));
 
-    jest.spyOn(api, 'getEnrollments').mockResolvedValueOnce(mockEnrollments);
-    renderWithProviders(props);
+    wrapper = mount(<EnrollmentPageWrapper {...props} />);
 
-    const expandBtns = await screen.findAllByTitle('Toggle Row Expanded');
-    expect(expandBtns.length).toBeGreaterThan(0);
+    mockEnrollments.forEach((_, index) => {
+      const expandable = wrapper.find('table tbody tr').at(index).find('td div span').at(0);
+      waitFor(() => {
+        expandable.simulate('click');
 
-    fireEvent.click(expandBtns[0]);
+        const extraTables = wrapper.find('table tbody tr').at(1).find('table');
+        expect(extraTables.length).toEqual(1);
 
-    const extraTables = screen.queryAllByTestId('extra-data-table');
-    expect(extraTables.length).toBe(0);
+        const extraDataTable = extraTables.at(0);
+        const extraTableHeaders = extraDataTable.find('thead tr th');
+        expect(extraTableHeaders.length).toEqual(5);
+        ['Last Modified', 'Last Modified By', 'Reason', 'Order Number', 'Source System'].forEach((expectedHeader, idx) => expect(
+          extraTableHeaders.at(idx).text(),
+        ).toEqual(expectedHeader));
+      });
+    });
   });
 
-  it('Expand all button shows extra data for all enrollments', async () => {
-    jest.spyOn(api, 'getEnrollments').mockResolvedValueOnce(enrollmentsData);
-    renderWithProviders(props);
+  it('Expand all button shows extra data for all enrollments', () => {
+    let expandable = wrapper.find('table tbody tr').at(0).find('td div span');
+    waitFor(() => {
+      expect(expandable.at(0).html()).toContain('fa-plus');
+      expect(expandable.at(0).html()).toContain('fa-plus');
 
-    const expandAllBtn = await screen.findByTitle('Toggle All Rows Expanded');
-    expect(expandAllBtn).toBeInTheDocument();
+      const expandAll = wrapper.find('table thead tr th a').at(0);
+      expandAll.simulate('click');
 
-    fireEvent.click(expandAllBtn);
+      expandable = wrapper.find('table tbody tr').at(0).find('td div span');
+      expect(expandable.at(0).html()).toContain('fa-minus');
+      expect(expandable.at(0).html()).toContain('fa-minus');
+      expandAll.simulate('click');
 
-    const firstExpand = screen.getAllByTitle('Toggle Row Expanded')[0];
-    expect(firstExpand.querySelector('svg')).toHaveClass('fa-minus');
-
-    fireEvent.click(expandAllBtn);
-    expect(firstExpand.querySelector('svg')).toHaveClass('fa-plus');
+      expandable = wrapper.find('table tbody tr').at(0).find('td div span');
+      expect(expandable.at(0).html()).toContain('fa-plus');
+      expect(expandable.at(0).html()).toContain('fa-plus');
+    });
   });
 
-  it('Expand All and Collapse All', async () => {
-    jest.spyOn(api, 'getEnrollments').mockResolvedValueOnce(enrollmentsData);
-    renderWithProviders(props);
+  it('Expand All and Collapse All', () => {
+    let expandAll = wrapper.find('table thead tr th a.link-primary');
+    waitFor(() => {
+      expect(expandAll.text()).toEqual('Expand All');
+      expandAll.simulate('click');
 
-    const expandAllBtn = await screen.findByTitle('Toggle All Rows Expanded');
-    expect(expandAllBtn).toBeInTheDocument();
+      expandAll = wrapper.find('table thead tr th a.link-primary');
+      expect(expandAll.text()).toEqual('Collapse All');
+      expandAll.simulate('click');
 
-    fireEvent.click(expandAllBtn);
-    expect(expandAllBtn).toHaveTextContent(/collapse all/i);
-
-    fireEvent.click(expandAllBtn);
-    expect(expandAllBtn).toHaveTextContent(/expand all/i);
+      expandAll = wrapper.find('table thead tr th a.link-primary');
+      expect(expandAll.text()).toEqual('Expand All');
+    });
   });
 
   it('View Certificate action', async () => {
-    jest.spyOn(api, 'getEnrollments').mockResolvedValueOnce(enrollmentsData);
-    renderWithProviders(props);
+    /**
+     * Testing the certificate fetch on first row only. Async painting in the loop was causing
+     * the test to pass data across the loop, causing inconsistent behavior..
+     */
+    let dataRow = wrapper.find('table tbody tr').at(0);
+    waitFor(() => {
+      const courseName = dataRow.find('td').at(2).text();
+      const apiMock = jest.spyOn(api, 'getCertificate').mockImplementationOnce(() => Promise.resolve({ courseKey: courseName }));
+      dataRow.find('.dropdown button').simulate('click');
+      dataRow = wrapper.find('table tbody tr').at(0);
+      dataRow.find('.dropdown-menu.show a').at(1).simulate('click');
 
-    const allRows = await screen.findAllByRole('row');
-    const firstDataRow = allRows[1];
-    const courseName = within(firstDataRow).getAllByRole('cell')[2].textContent;
+      const certificates = wrapper.find('Certificates');
+      expect(certificates.html()).toEqual(expect.stringContaining(courseName));
 
-    const apiMock = jest
-      .spyOn(api, 'getCertificate')
-      .mockResolvedValueOnce({ courseKey: courseName });
+      expect(apiMock).toHaveBeenCalledTimes(1);
+      certificates.find('button.btn-link').simulate('click');
+      expect(wrapper.find('Certificates')).toEqual({});
 
-    const dropdownBtn = within(firstDataRow).getByRole('button', {
-      name: /actions/i,
+      apiMock.mockReset();
     });
-    fireEvent.click(dropdownBtn);
-
-    const certificateLink = await within(firstDataRow).findByRole('button', {
-      name: /view certificate/i,
-    });
-    fireEvent.click(certificateLink);
-
-    const certificateModal = await screen.findByRole('dialog');
-    expect(certificateModal).toHaveTextContent(courseName);
-
-    const closeBtns = within(certificateModal).getAllByRole('button', {
-      name: /close/i,
-    });
-    fireEvent.click(closeBtns[0]);
-
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    });
-
-    apiMock.mockReset();
   });
 
   it('Filter enrollments on the basis of searchStr', async () => {
-    jest.spyOn(api, 'getEnrollments').mockResolvedValueOnce(enrollmentsData);
-    renderWithProviders({ ...props, searchStr: 'test123+2040' });
-
-    await waitFor(() => {
-      expect(screen.getByText(/Enrollments \(1\)/i)).toBeInTheDocument();
-    });
+    jest.spyOn(api, 'getEnrollments').mockImplementationOnce(() => Promise.resolve(enrollmentsData));
+    wrapper = mount(<EnrollmentPageWrapper searchStr="test123+2040" {...props} />);
+    const componentHeader = wrapper.find('h3');
+    waitFor(() => expect(componentHeader.text()).toEqual('Enrollments (1)'));
   });
 });

@@ -1,10 +1,5 @@
+import { mount } from 'enzyme';
 import React from 'react';
-import {
-  render,
-  screen,
-  within,
-  cleanup,
-} from '@testing-library/react';
 import FeatureBasedEnrollmentCard from './FeatureBasedEnrollmentCard';
 import {
   fbeDurationConfigEnabled,
@@ -14,93 +9,77 @@ import {
 } from './data/test/featureBasedEnrollment';
 
 describe('Feature Based Enrollment Card Component', () => {
-  afterEach(cleanup);
+  let wrapper;
 
-  describe('Gating Config Enabled', () => {
-    it('Gating Config Enabled', () => {
-      render(
-        <FeatureBasedEnrollmentCard
-          title="Gating Config Enabled"
-          fbeData={fbeGatingConfigEnabled}
-        />,
-      );
+  afterEach(() => {
+    wrapper.unmount();
+  });
 
-      expect(screen.getByText('Gating Config Enabled')).toBeInTheDocument();
+  describe('Gating config', () => {
+    const title = 'Gating Config';
 
-      const rows = screen.getAllByRole('row');
-      const dateRow = within(rows[0]);
-      const reasonRow = within(rows[1]);
+    it('Gating config enabled', () => {
+      wrapper = mount(<FeatureBasedEnrollmentCard title={title} fbeData={fbeGatingConfigEnabled} />);
+      const header = wrapper.find('.card-title');
+      const dataTable = wrapper.find('table.fbe-table tr');
+      const dateRow = dataTable.at(0);
+      const reasonRow = dataTable.at(1);
 
-      expect(dateRow.getByText('Enabled As Of')).toBeInTheDocument();
-      expect(dateRow.getByText('Jan 1, 2020 12:00 AM')).toBeInTheDocument();
+      expect(header.text()).toEqual('Gating Config Enabled');
+      expect(dateRow.find('th').at(0).text()).toEqual('Enabled As Of');
+      expect(dateRow.find('td').at(0).text()).toEqual('Jan 1, 2020 12:00 AM');
 
-      expect(reasonRow.getByText('Reason')).toBeInTheDocument();
-      expect(reasonRow.getByText('Site')).toBeInTheDocument();
+      expect(reasonRow.find('th').at(0).text()).toEqual('Reason');
+      expect(reasonRow.find('td').at(0).text()).toEqual('Site');
     });
 
     it('Gating config disabled', () => {
-      render(
-        <FeatureBasedEnrollmentCard
-          title="Gating config disabled"
-          fbeData={fbeGatingConfigDisabled}
-        />,
-      );
+      wrapper = mount(<FeatureBasedEnrollmentCard title={title} fbeData={fbeGatingConfigDisabled} />);
+      const header = wrapper.find('.card-title');
+      const dataTable = wrapper.find('table.fbe-table tr');
+      const dateRow = dataTable.at(0);
+      const reasonRow = dataTable.at(1);
 
-      expect(screen.getByText('Gating config disabled')).toBeInTheDocument();
+      expect(header.text()).toEqual('Gating Config Disabled');
+      expect(dateRow.find('th').at(0).text()).toEqual('Enabled As Of');
+      expect(dateRow.find('td').at(0).text()).toEqual('N/A');
 
-      const rows = screen.getAllByRole('row');
-      const dateRow = within(rows[0]);
-      const reasonRow = within(rows[1]);
-
-      expect(dateRow.getByText('Enabled As Of')).toBeInTheDocument();
-      expect(dateRow.getByText('N/A')).toBeInTheDocument();
-
-      expect(reasonRow.getByText('Reason')).toBeInTheDocument();
-      expect(reasonRow.queryByText('Site')).not.toBeInTheDocument();
+      expect(reasonRow.find('th').at(0).text()).toEqual('Reason');
+      expect(reasonRow.find('td').at(0).text()).toEqual('');
     });
   });
 
-  describe('Duration Config Enabled', () => {
+  describe('Duration config', () => {
+    const title = 'Duration Config';
+
     it('Duration config enabled', () => {
-      render(
-        <FeatureBasedEnrollmentCard
-          title="Duration Config Enabled"
-          fbeData={fbeDurationConfigEnabled}
-        />,
-      );
+      wrapper = mount(<FeatureBasedEnrollmentCard title={title} fbeData={fbeDurationConfigEnabled} />);
+      const header = wrapper.find('.card-title');
+      const dataTable = wrapper.find('table.fbe-table tr');
+      const dateRow = dataTable.at(0);
+      const reasonRow = dataTable.at(1);
 
-      expect(screen.getByText('Duration Config Enabled')).toBeInTheDocument();
+      expect(header.text()).toEqual('Duration Config Enabled');
+      expect(dateRow.find('th').at(0).text()).toEqual('Enabled As Of');
+      expect(dateRow.find('td').at(0).text()).toEqual('Feb 1, 2020 12:00 AM');
 
-      const rows = screen.getAllByRole('row');
-      const dateRow = within(rows[0]);
-      const reasonRow = within(rows[1]);
-
-      expect(dateRow.getByText('Enabled As Of')).toBeInTheDocument();
-      expect(dateRow.getByText('Feb 1, 2020 12:00 AM')).toBeInTheDocument();
-
-      expect(reasonRow.getByText('Reason')).toBeInTheDocument();
-      expect(reasonRow.getByText('Site Config')).toBeInTheDocument();
+      expect(reasonRow.find('th').at(0).text()).toEqual('Reason');
+      expect(reasonRow.find('td').at(0).text()).toEqual('Site Config');
     });
 
-    it('Duration Config Disabled', () => {
-      render(
-        <FeatureBasedEnrollmentCard
-          title="Duration Config Disabled"
-          fbeData={fbeDurationConfigDisabled}
-        />,
-      );
+    it('Duration config disabled', () => {
+      wrapper = mount(<FeatureBasedEnrollmentCard title={title} fbeData={fbeDurationConfigDisabled} />);
+      const header = wrapper.find('.card-title');
+      const dataTable = wrapper.find('table.fbe-table tr');
+      const dateRow = dataTable.at(0);
+      const reasonRow = dataTable.at(1);
 
-      expect(screen.getByText('Duration Config Disabled')).toBeInTheDocument();
+      expect(header.text()).toEqual('Duration Config Disabled');
+      expect(dateRow.find('th').at(0).text()).toEqual('Enabled As Of');
+      expect(dateRow.find('td').at(0).text()).toEqual('N/A');
 
-      const rows = screen.getAllByRole('row');
-      const dateRow = within(rows[0]);
-      const reasonRow = within(rows[1]);
-
-      expect(dateRow.getByText('Enabled As Of')).toBeInTheDocument();
-      expect(dateRow.getByText('N/A')).toBeInTheDocument();
-
-      expect(reasonRow.getByText('Reason')).toBeInTheDocument();
-      expect(reasonRow.queryByText('Site Config')).not.toBeInTheDocument();
+      expect(reasonRow.find('th').at(0).text()).toEqual('Reason');
+      expect(reasonRow.find('td').at(0).text()).toEqual('');
     });
   });
 });

@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { mount } from 'enzyme';
+import { waitFor } from '@testing-library/react';
 import * as api from './data/api';
 import enterpriseCustomerUsersData from './data/test/enterpriseCustomerUsers';
 import EnterpriseAssociations from './EnterpriseAssociations';
@@ -13,41 +14,40 @@ describe('<EnterpriseAssociations />', () => {
     jest.clearAllMocks();
   });
 
+  const renderWrapper = async () => {
+    const wrapper = mount(<EnterpriseAssociations {...props} />);
+
+    return wrapper;
+  };
+
   it('fetches enterprise customer users', async () => {
-    const mockGetEnterpriseCustomerUsers = jest
-      .spyOn(api, 'getEnterpriseCustomerUsers')
-      .mockResolvedValueOnce(enterpriseCustomerUsersData);
+    const mockGetEnterpriseCustomerUsers = jest.spyOn(api, 'getEnterpriseCustomerUsers').mockImplementationOnce(() => Promise.resolve(enterpriseCustomerUsersData));
+    await renderWrapper();
 
-    render(<EnterpriseAssociations {...props} />);
-
-    await waitFor(() => {
-      expect(mockGetEnterpriseCustomerUsers).toHaveBeenCalledTimes(1);
-      expect(mockGetEnterpriseCustomerUsers).toHaveBeenCalledWith(props.username);
-    });
+    expect(mockGetEnterpriseCustomerUsers).toHaveBeenCalledTimes(1);
+    expect(mockGetEnterpriseCustomerUsers).toHaveBeenCalledWith(props.username);
   });
 
-  it('renders alert if an error occurred', async () => {
-    jest
-      .spyOn(api, 'getEnterpriseCustomerUsers')
-      .mockRejectedValueOnce(new Error('ba'));
+  it('renders alert if an error occured', async () => {
+    const mockGetEnterpriseCustomerUsers = jest.spyOn(api, 'getEnterpriseCustomerUsers').mockImplementationOnce(() => Promise.reject(Error('ba')));
+    const wrapper = await renderWrapper();
 
-    render(<EnterpriseAssociations {...props} />);
+    expect(mockGetEnterpriseCustomerUsers).toHaveBeenCalledTimes(1);
+    expect(mockGetEnterpriseCustomerUsers).toHaveBeenCalledWith(props.username);
 
-    const alert = await screen.findByRole('alert');
-    expect(alert).toBeInTheDocument();
-    expect(alert).toHaveTextContent('Failed to retrieve enterprise associations.');
+    const alert = wrapper.find('.alert');
+    waitFor(() => {
+      expect(alert).toHaveLength(1);
+      expect(alert.text()).toEqual('Failed to retrieve enterprise associations.');
+    });
   });
 
   it('renders enterprise associations', async () => {
-    jest
-      .spyOn(api, 'getEnterpriseCustomerUsers')
-      .mockResolvedValueOnce(enterpriseCustomerUsersData);
+    jest.spyOn(api, 'getEnterpriseCustomerUsers').mockImplementationOnce(() => Promise.resolve(enterpriseCustomerUsersData));
+    const wrapper = await renderWrapper();
 
-    render(<EnterpriseAssociations {...props} />);
-
-    await waitFor(() => {
-      const rows = screen.getAllByRole('row');
-      expect(rows.length).toEqual(enterpriseCustomerUsersData.length + 1); // +1 for header row
-    });
+    const dataRows = wrapper.find('tr');
+    // first row is the headers
+    waitFor(() => expect(dataRows.length).toEqual(enterpriseCustomerUsersData.length + 1));
   });
 });

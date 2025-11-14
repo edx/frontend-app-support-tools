@@ -59,11 +59,13 @@ export default function SupportToolsTab() {
             <UserPage location={location} />
           </Tab>
 
-          <Tab eventKey={FEATURE_BASED_ENROLLMENT_TAB} title="Feature Based Enrollment">
+          <Tab
+            eventKey={FEATURE_BASED_ENROLLMENT_TAB}
+            title="Feature Based Enrollment"
+          >
             <br />
             <FeatureBasedEnrollmentIndexPage location={location} />
           </Tab>
-
           <Tab eventKey={PROGRAM_ENROLLMENT_TAB} title="Program Information">
             <br />
             <ProgramEnrollmentsIndexPage location={location} />

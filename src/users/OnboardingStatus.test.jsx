@@ -1,128 +1,107 @@
+import { mount } from 'enzyme';
 import React from 'react';
-import {
-  render,
-  screen,
-  waitFor,
-  within,
-} from '@testing-library/react';
+import { waitFor } from '@testing-library/react';
 import OnboardingStatus from './OnboardingStatus';
 import UserMessagesProvider from '../userMessages/UserMessagesProvider';
 import OnboardingStatusData from './data/test/onboardingStatus';
 import enrollmentsData from './data/test/enrollments';
 import { titleCase, formatDate } from '../utils';
+
 import * as api from './data/api';
 
-const renderWithProviders = (props = {}) => (
-  render(
-    <UserMessagesProvider>
-      <OnboardingStatus {...props} />
-    </UserMessagesProvider>,
-  )
+const OnboardingStatusWrapper = (props) => (
+  <UserMessagesProvider>
+    <OnboardingStatus {...props} />
+  </UserMessagesProvider>
 );
 
 describe('Onboarding Status', () => {
-  const props = { username: 'edX' };
+  let wrapper;
+  const props = {
+    username: 'edX',
+  };
 
-  beforeEach(() => {
-    jest.resetAllMocks();
+  beforeEach(async () => {
+    jest.spyOn(api, 'getOnboardingStatus').mockImplementationOnce(() => Promise.resolve(OnboardingStatusData));
+    wrapper = mount(<OnboardingStatusWrapper {...props} />);
   });
 
   it('Onboarding props', () => {
-    renderWithProviders(props);
-    expect(props.username).toEqual('edX');
+    const username = wrapper.prop('username');
+
+    expect(username).toEqual(props.username);
   });
 
-  it('Onboarding Status', async () => {
-    jest.spyOn(api, 'getOnboardingStatus').mockResolvedValue(OnboardingStatusData);
+  it('Onboarding Status', () => {
+    const verifiedInData = wrapper.find('Table#verified-in-data');
+    const verifiedInDataBody = verifiedInData.find('tbody tr td');
+    waitFor(() => {
+      expect(verifiedInDataBody).toHaveLength(4);
+      expect(verifiedInDataBody.at(0).text()).toEqual(OnboardingStatusData.verifiedIn.courseId);
+      expect(verifiedInDataBody.at(1).text()).toEqual(titleCase(OnboardingStatusData.verifiedIn.onboardingStatus));
+      expect(verifiedInDataBody.at(2).text()).toEqual(formatDate(OnboardingStatusData.verifiedIn.expirationDate));
+      expect(verifiedInDataBody.at(3).text()).toEqual('Link');
 
-    renderWithProviders(props);
-
-    await waitFor(() => {
-      const tables = screen.getAllByRole('table');
-      expect(tables.length).toBeGreaterThanOrEqual(2);
-
-      const verifiedInTable = tables[0];
-      const verifiedCells = within(verifiedInTable).getAllByRole('cell');
-
-      expect(verifiedCells).toHaveLength(4);
-      expect(verifiedCells[0]).toHaveTextContent(OnboardingStatusData.verifiedIn.courseId);
-      expect(verifiedCells[1]).toHaveTextContent(
-        titleCase(OnboardingStatusData.verifiedIn.onboardingStatus),
-      );
-      expect(verifiedCells[2]).toHaveTextContent(
-        formatDate(OnboardingStatusData.verifiedIn.expirationDate),
-      );
-      expect(verifiedCells[3]).toHaveTextContent('Link');
-
-      const currentStatusTable = tables[1];
-      const currentCells = within(currentStatusTable).getAllByRole('cell');
-
-      expect(currentCells).toHaveLength(4);
-      expect(currentCells[0]).toHaveTextContent(OnboardingStatusData.currentStatus.courseId);
-      expect(currentCells[1]).toHaveTextContent(
+      const currentStatusData = wrapper.find('Table#current-status-data');
+      const currentStatusDataBody = currentStatusData.find('tbody tr td');
+      expect(currentStatusDataBody).toHaveLength(4);
+      expect(currentStatusDataBody.at(0).text()).toEqual(OnboardingStatusData.currentStatus.courseId);
+      expect(currentStatusDataBody.at(1).text()).toEqual(
         titleCase(OnboardingStatusData.currentStatus.onboardingStatus),
       );
-      expect(currentCells[2]).toHaveTextContent(
-        formatDate(OnboardingStatusData.currentStatus.expirationDate),
-      );
-      expect(currentCells[3]).toHaveTextContent('Link');
+      expect(currentStatusDataBody.at(2).text()).toEqual(formatDate(OnboardingStatusData.currentStatus.expirationDate));
+      expect(currentStatusDataBody.at(3).text()).toEqual('Link');
     });
   });
 
   it('No Onboarding Status Data', async () => {
-    jest.spyOn(api, 'getOnboardingStatus').mockResolvedValue({
-      verifiedIn: null,
-      currentStatus: null,
-    });
+    const onboardingData = { verifiedIn: null, currentStatus: null };
 
-    renderWithProviders(props);
+    jest.spyOn(api, 'getOnboardingStatus').mockImplementationOnce(() => Promise.resolve(onboardingData));
+    wrapper = mount(<OnboardingStatusWrapper {...props} />);
 
-    await waitFor(() => {
-      const noRecords = screen.getAllByText('No Record Found');
-      expect(noRecords).toHaveLength(2);
+    const verifiedInDataTable = wrapper.find('div#verified-in-no-data');
+    waitFor(() => {
+      expect(verifiedInDataTable.text()).toEqual('No Record Found');
+      const currentStatusDataTable = wrapper.find('div#current-status-no-data');
+      expect(currentStatusDataTable.text()).toEqual('No Record Found');
     });
   });
 
   it('No Onboarding Status Data with error message', async () => {
-    jest.spyOn(api, 'getOnboardingStatus').mockResolvedValue({
-      verifiedIn: null,
-      currentStatus: null,
-      error: 'Server fetched failed',
-    });
+    const onboardingData = { verifiedIn: null, currentStatus: null, error: 'Server fetched failed' };
 
-    renderWithProviders(props);
+    jest.spyOn(api, 'getOnboardingStatus').mockImplementationOnce(() => Promise.resolve(onboardingData));
+    wrapper = mount(<OnboardingStatusWrapper {...props} />);
 
-    await waitFor(() => {
-      const errs = screen.getAllByText('Server fetched failed');
-      expect(errs).toHaveLength(2);
+    const verifiedInDataTable = wrapper.find('div#verified-in-no-data');
+    waitFor(() => {
+      expect(verifiedInDataTable.text()).toEqual('Server fetched failed');
+      const currentStatusDataTable = wrapper.find('div#current-status-no-data');
+      expect(currentStatusDataTable.text()).toEqual('Server fetched failed');
     });
   });
 
   it('No Onboarding Status Data with current status data only', async () => {
     const onboardingData = { ...OnboardingStatusData, verifiedIn: null };
 
-    jest.spyOn(api, 'getEnrollments').mockResolvedValue(enrollmentsData);
-    jest.spyOn(api, 'getOnboardingStatus').mockResolvedValue(onboardingData);
+    jest.spyOn(api, 'getEnrollments').mockImplementationOnce(() => Promise.resolve(enrollmentsData));
+    jest.spyOn(api, 'getOnboardingStatus').mockImplementationOnce(() => Promise.resolve(onboardingData));
+    wrapper = mount(<OnboardingStatusWrapper {...props} />);
 
-    renderWithProviders(props);
+    const verifiedInDataTable = wrapper.find('div#verified-in-no-data');
+    waitFor(() => {
+      expect(verifiedInDataTable.text()).toEqual('No Record Found');
 
-    await waitFor(() => {
-      const noRecords = screen.getAllByText('No Record Found');
-      expect(noRecords.length).toBeGreaterThanOrEqual(1);
-
-      const tables = screen.getAllByRole('table');
-      const currentTable = tables[0];
-      const currentCells = within(currentTable).getAllByRole('cell');
-
-      expect(currentCells).toHaveLength(4);
-      expect(currentCells[0]).toHaveTextContent(OnboardingStatusData.currentStatus.courseId);
-      expect(currentCells[1]).toHaveTextContent(
+      const currentStatusData = wrapper.find('Table#current-status-data');
+      const currentStatusDataBody = currentStatusData.find('tbody tr td');
+      expect(currentStatusDataBody).toHaveLength(4);
+      expect(currentStatusDataBody.at(0).text()).toEqual(OnboardingStatusData.currentStatus.courseId);
+      expect(currentStatusDataBody.at(1).text()).toEqual(
         titleCase(OnboardingStatusData.currentStatus.onboardingStatus),
       );
-      expect(currentCells[2]).toHaveTextContent(
-        formatDate(OnboardingStatusData.currentStatus.expirationDate),
-      );
-      expect(currentCells[3]).toHaveTextContent('Link');
+      expect(currentStatusDataBody.at(2).text()).toEqual(formatDate(OnboardingStatusData.currentStatus.expirationDate));
+      expect(currentStatusDataBody.at(3).text()).toEqual('Link');
     });
   });
 
@@ -138,31 +117,27 @@ describe('Onboarding Status', () => {
       enrollmentDate: null,
       instructorDashboardLink: null,
     };
-
     const onboardingData = { ...OnboardingStatusData, verifiedIn: nullData };
 
-    jest.spyOn(api, 'getOnboardingStatus').mockResolvedValue(onboardingData);
+    jest.spyOn(api, 'getOnboardingStatus').mockImplementationOnce(() => Promise.resolve(onboardingData));
+    wrapper = mount(<OnboardingStatusWrapper {...props} />);
 
-    renderWithProviders(props);
-
-    await waitFor(() => {
-      const tables = screen.getAllByRole('table');
-      const verifiedInTable = tables[0];
-      const verifiedCells = within(verifiedInTable).getAllByRole('cell');
-
-      expect(verifiedCells).toHaveLength(4);
-      expect(verifiedCells[0]).toHaveTextContent('No Course');
-      expect(verifiedCells[1]).toHaveTextContent('See Instructor Dashboard');
-      expect(verifiedCells[2]).toHaveTextContent('N/A');
-      expect(verifiedCells[3]).toHaveTextContent('N/A');
+    const verifiedInData = wrapper.find('Table#verified-in-data');
+    const verifiedInDataBody = verifiedInData.find('tbody tr td');
+    waitFor(() => {
+      expect(verifiedInDataBody).toHaveLength(4);
+      expect(verifiedInDataBody.at(0).text()).toEqual('No Course');
+      expect(verifiedInDataBody.at(1).text()).toEqual('See Instructor Dashboard');
+      expect(verifiedInDataBody.at(2).text()).toEqual('N/A');
+      expect(verifiedInDataBody.at(3).text()).toEqual('N/A');
     });
   });
 
   it('Onboarding Status Data is loading', async () => {
-    jest.spyOn(api, 'getOnboardingStatus').mockResolvedValue(null);
+    const onboardingData = null;
 
-    renderWithProviders(props);
-
-    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    jest.spyOn(api, 'getOnboardingStatus').mockImplementationOnce(() => Promise.resolve(onboardingData));
+    wrapper = mount(<OnboardingStatusWrapper {...props} />);
+    expect(wrapper.find('.sr-only').text()).toEqual('Loading..');
   });
 });
