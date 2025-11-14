@@ -1,165 +1,146 @@
+import { mount } from 'enzyme';
 import React from 'react';
-import {
-  render,
-  screen,
-  waitFor,
-  within,
-  fireEvent,
-  cleanup,
-  act,
-} from '@testing-library/react';
-import { IntlProvider } from '@edx/frontend-platform/i18n';
+import { waitFor } from '@testing-library/react';
+import { getConfig } from '@edx/frontend-platform';
+
+import Certificates from './Certificates';
+import { downloadableCertificate, pdfCertificate, regeneratableCertificate } from '../data/test/certificates';
 import UserMessagesProvider from '../../userMessages/UserMessagesProvider';
 import * as api from '../data/api';
-import Certificates from './Certificates';
-import {
-  downloadableCertificate,
-  pdfCertificate,
-  regeneratableCertificate,
-} from '../data/test/certificates';
 
 const CertificateWrapper = (props) => (
-  <IntlProvider locale="en">
-    <UserMessagesProvider>
-      <Certificates {...props} />
-    </UserMessagesProvider>
-  </IntlProvider>
+  <UserMessagesProvider>
+    <Certificates {...props} />;
+  </UserMessagesProvider>
 );
 
 describe('Certificate component', () => {
-  let apiMock;
+  let apiMock; let wrapper;
   const testUser = 'testUser';
   const testCourseId = 'course-v1:testX+test123+2030';
 
   const props = {
     username: testUser,
     courseId: testCourseId,
-    closeHandler: jest.fn(),
+    closeHandler: jest.fn(() => { }),
   };
 
   afterEach(() => {
-    if (apiMock) {
-      apiMock.mockRestore();
-    }
-    cleanup();
+    apiMock.mockRestore();
   });
 
   it('Default component render with Modal', async () => {
-    apiMock = jest.spyOn(api, 'getCertificate').mockResolvedValueOnce(
-      downloadableCertificate,
-    );
+    apiMock = jest.spyOn(api, 'getCertificate').mockImplementationOnce(() => Promise.resolve(downloadableCertificate));
+    wrapper = mount(<CertificateWrapper {...props} />);
 
-    await act(async () => {
-      render(<CertificateWrapper {...props} />);
-    });
+    const dataRows = wrapper.find('table.certificate-info-table tbody tr');
+    waitFor(() => expect(dataRows.length).toEqual(7));
 
-    const rows = await screen.findAllByRole('row');
-    expect(rows.length).toBe(7);
-
-    const modal = screen.getByRole('dialog');
-    expect(modal).toBeInTheDocument();
-
-    const closeButtons = within(modal).getAllByRole('button', { name: /Close/i });
-    const closeBtn = closeButtons[closeButtons.length - 1];
-    fireEvent.click(closeBtn);
-
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    });
+    let certificateModal = wrapper.find('ModalDialog#certificate');
+    expect(certificateModal.prop('isOpen')).toEqual(true);
+    wrapper.find('button.btn-link').simulate('click');
+    certificateModal = wrapper.find('ModalDialog#certificate');
+    expect(certificateModal.prop('isOpen')).toEqual(false);
   });
 
   it('Downloadable Certificate', async () => {
-    apiMock = jest.spyOn(api, 'getCertificate').mockResolvedValueOnce(
-      downloadableCertificate,
-    );
+    apiMock = jest.spyOn(api, 'getCertificate').mockImplementationOnce(() => Promise.resolve(downloadableCertificate));
+    wrapper = mount(<CertificateWrapper {...props} />);
 
-    await act(async () => {
-      render(<CertificateWrapper {...props} />);
+    const dataRows = wrapper.find('table.certificate-info-table tbody tr');
+    waitFor(() => {
+      expect(dataRows.length).toEqual(7);
+
+      // Explictly check each row and verify individual piece of data
+      const courseId = dataRows.at(0);
+      expect(courseId.find('th').text()).toEqual('Course ID');
+      expect(courseId.find('td').text()).toEqual(testCourseId);
+
+      // Explictly check each row and verify individual piece of data
+      const certType = dataRows.at(1);
+      expect(certType.find('th').text()).toEqual('Certificate Type');
+      expect(certType.find('td').text()).toEqual('verified');
+
+      const status = dataRows.at(2);
+      expect(status.find('th').text()).toEqual('Status');
+      expect(status.find('td').text()).toEqual('passing');
+
+      const grade = dataRows.at(3);
+      expect(grade.find('th').text()).toEqual('Grade');
+      expect(grade.find('td').text()).toEqual('60');
+
+      const lastUpdated = dataRows.at(4);
+      expect(lastUpdated.find('th').text()).toEqual('Last Updated');
+      expect(lastUpdated.find('td').text()).toEqual('Jan 1, 2020 12:00 AM');
+
+      const downloadUrl = dataRows.at(5);
+      expect(downloadUrl.find('th').text()).toEqual('Download URL');
+      expect(downloadUrl.find('td').text()).toEqual('Download');
+      expect(downloadUrl.find('td').find('a').prop('href')).toEqual('http://localhost:18000/certificates/1234-abcd');
+
+      const action = dataRows.at(6);
+      expect(action.find('th').text()).toEqual('Actions');
+      expect(action.find('button#generate-certificate').length).toEqual(1);
     });
-
-    const rows = await screen.findAllByRole('row');
-    expect(rows.length).toBe(7);
-
-    expect(within(rows[0]).getByText('Course ID')).toBeInTheDocument();
-    expect(within(rows[0]).getByText(testCourseId)).toBeInTheDocument();
-
-    expect(within(rows[1]).getByText('Certificate Type')).toBeInTheDocument();
-    expect(within(rows[1]).getByText('verified')).toBeInTheDocument();
-
-    expect(within(rows[2]).getByText('Status')).toBeInTheDocument();
-    expect(within(rows[2]).getByText('passing')).toBeInTheDocument();
-
-    expect(within(rows[3]).getByText('Grade')).toBeInTheDocument();
-    expect(within(rows[3]).getByText('60')).toBeInTheDocument();
-
-    expect(within(rows[4]).getByText('Last Updated')).toBeInTheDocument();
-    expect(within(rows[4]).getByText('Jan 1, 2020 12:00 AM')).toBeInTheDocument();
-
-    const downloadLink = within(rows[5]).getByRole('link', { name: /Download/i });
-    expect(downloadLink).toHaveAttribute(
-      'href',
-      'http://localhost:18000/certificates/1234-abcd',
-    );
-
-    const actionBtn = within(rows[6]).getByRole('button', { name: /Generate/i });
-    expect(actionBtn).toBeInTheDocument();
   });
 
   it('Regeneratable Certificate', async () => {
-    apiMock = jest.spyOn(api, 'getCertificate').mockResolvedValueOnce(
-      regeneratableCertificate,
-    );
+    apiMock = jest.spyOn(api, 'getCertificate').mockImplementationOnce(() => Promise.resolve(regeneratableCertificate));
+    wrapper = mount(<CertificateWrapper {...props} />);
 
-    await act(async () => {
-      render(<CertificateWrapper {...props} />);
+    const dataRows = wrapper.find('table.certificate-info-table tbody tr');
+    waitFor(() => {
+      expect(dataRows.length).toEqual(7);
+
+      expect(dataRows.at(0).html()).toEqual(expect.stringContaining(regeneratableCertificate.courseKey));
+
+      const action = dataRows.at(6);
+      const actionButton = action.find('button#regenerate-certificate');
+      expect(action.find('th').text()).toEqual('Actions');
+      expect(actionButton.text()).toEqual('Regenerate');
     });
-
-    const rows = await screen.findAllByRole('row');
-    expect(rows.length).toBe(7);
-
-    expect(rows[0].textContent).toContain(regeneratableCertificate.courseKey);
-
-    const actionBtn = within(rows[6]).getByRole('button', { name: /Regenerate/i });
-    expect(actionBtn).toHaveTextContent('Regenerate');
   });
 
   it('Pdf Certificate', async () => {
-    apiMock = jest.spyOn(api, 'getCertificate').mockResolvedValueOnce(pdfCertificate);
+    apiMock = jest.spyOn(api, 'getCertificate').mockImplementationOnce(() => Promise.resolve(pdfCertificate));
+    wrapper = mount(<CertificateWrapper {...props} />);
 
-    await act(async () => {
-      render(<CertificateWrapper {...props} />);
+    const dataRows = wrapper.find('table.certificate-info-table tbody tr');
+    waitFor(() => {
+      expect(dataRows.length).toEqual(7);
+
+      expect(dataRows.at(0).html()).toEqual(expect.stringContaining(pdfCertificate.courseKey));
+
+      const downloadUrl = dataRows.at(5);
+      expect(downloadUrl.find('th').text()).toEqual('Download URL');
+      expect(downloadUrl.find('td').text()).toEqual('Download');
+
+      // Pdf certificate's download link does not have LMS base url
+      const downloadLink = downloadUrl.find('td').find('a').prop('href');
+      expect(downloadLink).not.toEqual(expect.stringContaining(`${getConfig().LMS_BASE_URL}`));
+      expect(downloadLink).toEqual('https://www.example.com');
     });
-
-    const rows = await screen.findAllByRole('row');
-    expect(rows.length).toBe(7);
-
-    expect(rows[0].textContent).toContain(pdfCertificate.courseKey);
-
-    const downloadLink = within(rows[5]).getByRole('link', { name: /Download/i });
-    expect(downloadLink).toHaveAttribute('href', 'https://www.example.com');
   });
 
   it('Missing Certificate Data', async () => {
-    apiMock = jest.spyOn(api, 'getCertificate').mockResolvedValueOnce({
-      courseKey: testCourseId,
+    apiMock = jest.spyOn(api, 'getCertificate').mockImplementationOnce(() => Promise.resolve({ courseKey: testCourseId }));
+    wrapper = mount(<CertificateWrapper {...props} />);
+
+    const dataRows = wrapper.find('table.certificate-info-table tbody tr');
+
+    waitFor(() => {
+      expect(dataRows.length).toEqual(7);
+      expect(dataRows.at(0).html()).toEqual(expect.stringContaining(regeneratableCertificate.courseKey));
+      expect(dataRows.at(1).find('td').text()).toEqual('Not Available');
+      expect(dataRows.at(2).find('td').text()).toEqual('Not Available');
+      expect(dataRows.at(3).find('td').text()).toEqual('Not Available');
+      expect(dataRows.at(4).find('td').text()).toEqual('N/A');
+      expect(dataRows.at(5).find('td').text()).toEqual('Not Available');
     });
-
-    await act(async () => {
-      render(<CertificateWrapper {...props} />);
-    });
-
-    const rows = await screen.findAllByRole('row');
-    expect(rows.length).toBe(7);
-
-    expect(within(rows[1]).getByText('Not Available')).toBeInTheDocument();
-    expect(within(rows[2]).getByText('Not Available')).toBeInTheDocument();
-    expect(within(rows[3]).getByText('Not Available')).toBeInTheDocument();
-    expect(within(rows[4]).getByText('N/A')).toBeInTheDocument();
-    expect(within(rows[5]).getByText('Not Available')).toBeInTheDocument();
   });
 
   it('Certificate Fetch Errors', async () => {
-    apiMock = jest.spyOn(api, 'getCertificate').mockResolvedValueOnce({
+    apiMock = jest.spyOn(api, 'getCertificate').mockImplementationOnce(() => Promise.resolve({
       errors: [
         {
           code: null,
@@ -169,46 +150,51 @@ describe('Certificate component', () => {
           topic: 'certificates',
         },
       ],
-    });
-
-    await act(async () => {
-      render(<CertificateWrapper {...props} />);
-    });
-
-    const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent('No certificate found');
+    }));
+    wrapper = mount(<CertificateWrapper {...props} />);
+    const alert = wrapper.find('.alert');
+    waitFor(() => expect(alert.text()).toEqual('No certificate found'));
   });
 
   describe('Generate Certificates flow', () => {
     let generateApiMock;
 
     afterEach(() => {
-      if (generateApiMock) {
-        generateApiMock.mockRestore();
-      }
+      generateApiMock.mockRestore();
     });
 
     it('Successful certificate generation flow', async () => {
-      generateApiMock = jest.spyOn(api, 'generateCertificate').mockResolvedValueOnce({});
-      apiMock = jest.spyOn(api, 'getCertificate').mockResolvedValueOnce(
-        downloadableCertificate,
-      );
+      generateApiMock = jest.spyOn(api, 'generateCertificate').mockImplementationOnce(() => Promise.resolve({}));
+      apiMock = jest.spyOn(api, 'getCertificate').mockImplementationOnce(() => Promise.resolve(downloadableCertificate));
+      // 2nd call to get certificate after generation would yield regenerate certificate data.
+      jest.spyOn(api, 'getCertificate').mockImplementationOnce(() => Promise.resolve(regeneratableCertificate));
 
-      await act(async () => {
-        render(<CertificateWrapper {...props} />);
-      });
+      wrapper = mount(<CertificateWrapper {...props} />);
 
-      const generateButton = await screen.findByRole('button', { name: /Generate/i });
-      expect(generateButton).toBeInTheDocument();
-      fireEvent.click(generateButton);
+      let generateButton = wrapper.find('button#generate-certificate');
+      waitFor(() => {
+        expect(generateButton.text()).toEqual('Generate');
+        expect(generateButton.prop('disabled')).toBeFalsy();
 
-      await waitFor(() => {
+        generateButton.simulate('click');
+        generateButton = wrapper.find('button#generate-certificate');
+
+        expect(generateButton.prop('disabled')).toBeTruthy();
         expect(generateApiMock).toHaveBeenCalledTimes(1);
+        expect(wrapper.find('div.alert-info').text()).toEqual('Generating New Certificate');
+
+        // Once the generation api call is successful, the status text will revert
+        // and button will change into regenerate button.
+        const regenerateButton = wrapper.find('button#regenerate-certificate');
+        expect(wrapper.find('h3').length).toEqual(0);
+        expect(regenerateButton.text()).toEqual('Regenerate');
+        expect(regenerateButton.prop('disabled')).toBeFalsy();
+        expect(apiMock).toHaveBeenCalledTimes(2);
       });
     });
 
     it('Unsuccessful certificate generation flow', async () => {
-      generateApiMock = jest.spyOn(api, 'generateCertificate').mockResolvedValueOnce({
+      generateApiMock = jest.spyOn(api, 'generateCertificate').mockImplementationOnce(() => Promise.resolve({
         errors: [
           {
             code: null,
@@ -218,22 +204,20 @@ describe('Certificate component', () => {
             topic: 'certificates',
           },
         ],
-      });
+      }));
+      apiMock = jest.spyOn(api, 'getCertificate').mockImplementation(() => Promise.resolve(downloadableCertificate));
 
-      apiMock = jest.spyOn(api, 'getCertificate').mockResolvedValueOnce(
-        downloadableCertificate,
-      );
+      wrapper = mount(<CertificateWrapper {...props} />);
 
-      await act(async () => {
-        render(<CertificateWrapper {...props} />);
-      });
+      const generateButton = wrapper.find('button#generate-certificate');
+      waitFor(() => {
+        expect(generateButton.text()).toEqual('Generate');
+        expect(generateButton.prop('disabled')).toBeFalsy();
+        generateButton.simulate('click');
+        expect(generateApiMock).toHaveBeenCalledTimes(1);
 
-      const generateButton = await screen.findByRole('button', { name: /Generate/i });
-      fireEvent.click(generateButton);
-
-      await waitFor(async () => {
-        const alert = await screen.findByRole('alert');
-        expect(alert).toHaveTextContent('Error generating certificate');
+        const alert = wrapper.find('.alert');
+        expect(alert.text()).toEqual('Error generating certificate');
       });
     });
   });
@@ -242,34 +226,35 @@ describe('Certificate component', () => {
     let regenerateApiMock;
 
     afterEach(() => {
-      if (regenerateApiMock) {
-        regenerateApiMock.mockRestore();
-      }
+      regenerateApiMock.mockRestore();
     });
 
     it('Successful certificate regeneration flow', async () => {
-      regenerateApiMock = jest.spyOn(api, 'regenerateCertificate').mockResolvedValueOnce({});
-      apiMock = jest.spyOn(api, 'getCertificate').mockResolvedValueOnce(
-        regeneratableCertificate,
-      );
+      regenerateApiMock = jest.spyOn(api, 'regenerateCertificate').mockImplementationOnce(() => Promise.resolve({}));
+      apiMock = jest.spyOn(api, 'getCertificate').mockImplementation(() => Promise.resolve(regeneratableCertificate));
 
-      await act(async () => {
-        render(<CertificateWrapper {...props} />);
-      });
+      wrapper = mount(<CertificateWrapper {...props} />);
 
-      const modal = await screen.findByRole('dialog');
-      const regenerateButton = within(modal).getByRole('button', { name: 'Regenerate' });
+      let regenerateButton = wrapper.find('button#regenerate-certificate');
+      waitFor(() => {
+        expect(regenerateButton.text()).toEqual('Regenerate');
+        expect(regenerateButton.prop('disabled')).toBeFalsy();
 
-      expect(regenerateButton).toHaveTextContent('Regenerate');
-      fireEvent.click(regenerateButton);
+        regenerateButton.simulate('click');
+        regenerateButton = wrapper.find('button#regenerate-certificate');
 
-      await waitFor(() => {
+        expect(regenerateButton.prop('disabled')).toBeTruthy();
         expect(regenerateApiMock).toHaveBeenCalledTimes(1);
+        expect(wrapper.find('div.alert-info').text()).toEqual('Regenerating Certificate');
+
+        regenerateButton = wrapper.find('button#regenerate-certificate');
+        expect(wrapper.find('h3').length).toEqual(0);
+        expect(regenerateButton.prop('disabled')).toBeFalsy();
       });
     });
 
     it('Unsuccessful certificate regeneration flow', async () => {
-      regenerateApiMock = jest.spyOn(api, 'regenerateCertificate').mockResolvedValueOnce({
+      regenerateApiMock = jest.spyOn(api, 'regenerateCertificate').mockImplementationOnce(() => Promise.resolve({
         errors: [
           {
             code: null,
@@ -279,23 +264,21 @@ describe('Certificate component', () => {
             topic: 'certificates',
           },
         ],
-      });
+      }));
+      apiMock = jest.spyOn(api, 'getCertificate').mockImplementation(() => Promise.resolve(regeneratableCertificate));
 
-      apiMock = jest.spyOn(api, 'getCertificate').mockResolvedValueOnce(
-        regeneratableCertificate,
-      );
+      wrapper = mount(<CertificateWrapper {...props} />);
 
-      await act(async () => {
-        render(<CertificateWrapper {...props} />);
-      });
+      const regenerateButton = wrapper.find('button#regenerate-certificate');
+      waitFor(() => {
+        expect(regenerateButton.text()).toEqual('Regenerate');
+        expect(regenerateButton.prop('disabled')).toBeFalsy();
 
-      const modal = await screen.findByRole('dialog');
-      const regenerateButton = within(modal).getByRole('button', { name: 'Regenerate' });
-      fireEvent.click(regenerateButton);
+        regenerateButton.simulate('click');
+        expect(regenerateApiMock).toHaveBeenCalledTimes(1);
 
-      await waitFor(() => {
-        const alert = screen.getByRole('alert');
-        expect(alert).toHaveTextContent('Error regenerating certificate');
+        const alert = wrapper.find('.alert');
+        expect(alert.text()).toEqual('Error regenerating certificate');
       });
     });
   });

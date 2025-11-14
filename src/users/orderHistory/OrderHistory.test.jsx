@@ -1,11 +1,11 @@
 import React from 'react';
 import {
-  render, waitFor, fireEvent,
+  render, waitFor, act, fireEvent,
 } from '@testing-library/react';
 import { IntlProvider } from '@edx/frontend-platform/i18n';
 import OrderHistory from './OrderHistory';
 import { getOrderHistory } from '../data/api';
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/extend-expect';
 import UserMessagesProvider from '../../userMessages/UserMessagesProvider';
 
 jest.mock('../data/api');
@@ -22,7 +22,7 @@ describe('OrderHistory', () => {
   const username = 'testuser';
 
   afterEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
   });
 
   it('should fetch order history data and render table', async () => {
@@ -38,7 +38,9 @@ describe('OrderHistory', () => {
               url: 'https://example.com/product1',
               title: 'Product 1',
               expires: '2023-12-31',
-              attributeValues: [{ value: 'Type A' }],
+              attributeValues: [
+                { value: 'Type A' },
+              ],
             },
             quantity: 1,
             status: 'completed',
@@ -47,55 +49,57 @@ describe('OrderHistory', () => {
       },
     ];
 
-    getOrderHistory.mockResolvedValueOnce(orderHistoryData);
+    getOrderHistory.mockImplementation(() => Promise.resolve(orderHistoryData));
 
-    const { getByText, getAllByText } = render(<OrderHistoryWrapper username={username} />);
+    await act(async () => {
+      const { getByText, getAllByText } = render(<OrderHistoryWrapper username={username} />);
 
-    await waitFor(() => {
-      expect(getOrderHistory).toHaveBeenCalledWith(username);
+      await waitFor(() => {
+        expect(getOrderHistory).toHaveBeenCalledWith(username);
+      });
+
+      expect(getByText('Order History (1)')).toBeInTheDocument();
+      expect(getByText('Order Status')).toBeInTheDocument();
+      expect(getByText('Order Number')).toBeInTheDocument();
+      expect(getByText('Date Placed')).toBeInTheDocument();
+      expect(getByText('Product Tracking')).toBeInTheDocument();
+      expect(getByText('Expand All')).toBeInTheDocument();
+
+      const expandAllLink = getByText('Expand All');
+      fireEvent.click(expandAllLink);
+
+      expect(getAllByText('completed')[0]).toBeInTheDocument();
+      expect(getAllByText('completed')[1]).toBeInTheDocument();
+      expect(getByText('12345')).toBeInTheDocument();
+      expect(getByText('Jun 12, 2023 12:00 AM')).toBeInTheDocument();
+      expect(getByText('tracking123')).toBeInTheDocument();
+      expect(getByText('Product 1')).toBeInTheDocument();
+      expect(getByText('Type A')).toBeInTheDocument();
     });
-
-    expect(getByText('Order History (1)')).toBeInTheDocument();
-    expect(getByText('Order Status')).toBeInTheDocument();
-    expect(getByText('Order Number')).toBeInTheDocument();
-    expect(getByText('Date Placed')).toBeInTheDocument();
-    expect(getByText('Product Tracking')).toBeInTheDocument();
-    expect(getByText('Expand All')).toBeInTheDocument();
-
-    fireEvent.click(getByText('Expand All'));
-
-    expect(getAllByText('completed')[0]).toBeInTheDocument();
-    expect(getAllByText('completed')[1]).toBeInTheDocument();
-    expect(getByText('12345')).toBeInTheDocument();
-    expect(getByText('Jun 12, 2023 12:00 AM')).toBeInTheDocument();
-    expect(getByText('tracking123')).toBeInTheDocument();
-    expect(getByText('Product 1')).toBeInTheDocument();
-    expect(getByText('Type A')).toBeInTheDocument();
   });
 
   it('should render loading indicator while fetching data', async () => {
-    getOrderHistory.mockResolvedValueOnce([]);
+    getOrderHistory.mockImplementation(() => Promise.resolve([]));
 
-    const { getByText } = render(<OrderHistoryWrapper username={username} />);
+    await act(async () => {
+      const { getByText } = render(<OrderHistoryWrapper username={username} />);
 
-    // Flexible matcher in case component uses "Loading..." instead of "Loading"
-    expect(getByText(/loading/i)).toBeInTheDocument();
-
-    await waitFor(() => {
-      expect(getOrderHistory).toHaveBeenCalledWith(username);
+      expect(getByText('Loading')).toBeInTheDocument();
     });
   });
 
   it('should handle empty order history data', async () => {
-    getOrderHistory.mockResolvedValueOnce([]);
+    getOrderHistory.mockImplementation(() => Promise.resolve([]));
 
-    const { getByText } = render(<OrderHistoryWrapper username={username} />);
+    await act(async () => {
+      const { getByText } = render(<OrderHistoryWrapper username={username} />);
 
-    await waitFor(() => {
-      expect(getOrderHistory).toHaveBeenCalledWith(username);
+      await waitFor(() => {
+        expect(getOrderHistory).toHaveBeenCalledWith(username);
+      });
+
+      expect(getByText('Order History (0)')).toBeInTheDocument();
     });
-
-    expect(getByText('Order History (0)')).toBeInTheDocument();
   });
 
   it('displays error messages when there are errors in the API response', async () => {
@@ -111,15 +115,17 @@ describe('OrderHistory', () => {
       ],
     };
 
-    getOrderHistory.mockResolvedValueOnce(mockErrors);
+    getOrderHistory.mockImplementation(() => Promise.resolve(mockErrors));
 
-    const { getByText } = render(<OrderHistoryWrapper username={username} />);
+    await act(async () => {
+      const { getByText } = render(<OrderHistoryWrapper username={username} />);
 
-    await waitFor(() => {
-      expect(getOrderHistory).toHaveBeenCalledWith(username);
+      await waitFor(() => {
+        expect(getOrderHistory).toHaveBeenCalledWith(username);
+      });
+
+      expect(getByText('Order History (0)')).toBeInTheDocument();
+      expect(getByText('There was an error retrieving order history for the user')).toBeInTheDocument();
     });
-
-    expect(getByText('Order History (0)')).toBeInTheDocument();
-    expect(getByText('There was an error retrieving order history for the user')).toBeInTheDocument();
   });
 });

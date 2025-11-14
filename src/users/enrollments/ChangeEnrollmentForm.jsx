@@ -2,9 +2,7 @@ import React, { useCallback, useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import {
   ActionRow,
-  Button,
-  Form,
-  ModalDialog,
+  Button, Form, ModalDialog,
 } from '@openedx/paragon';
 import AlertList from '../../userMessages/AlertList';
 import { patchEnrollment } from '../data/api';
@@ -18,7 +16,7 @@ export default function ChangeEnrollmentForm({
   forwardedRef,
   changeHandler,
 }) {
-  const [mode, setMode] = useState('');
+  const [mode, setMode] = useState(enrollment.mode);
   const [reason, setReason] = useState('');
   const [comments, setComments] = useState('');
   const [hideOnSubmit, setHideOnSubmit] = useState(false);
@@ -26,25 +24,26 @@ export default function ChangeEnrollmentForm({
   const [showLoader, setShowLoader] = useState(false);
   const { add, clear } = useContext(UserMessagesContext);
 
-  // Ensure default "Reason for Change" option
   reasons[0] = { label: 'Reason for Change', value: '', disabled: true };
 
   const getModes = () => {
-    const modeList = [{ label: 'New Mode', value: '', disabled: true }];
-    enrollment.courseModes.forEach((enrollmentMode) => {
-      if (enrollmentMode.slug !== enrollment.mode) {
-        modeList.push({ label: enrollmentMode.slug, value: enrollmentMode.slug, disabled: false });
-      }
-    });
+    const modeList = [];
+    modeList.push({ label: 'New Mode', value: enrollment.mode, disabled: true });
+    enrollment.courseModes.map(enrollmentMode => (
+      !(enrollmentMode.slug === enrollment.mode) && modeList.push({
+        label: enrollmentMode.slug,
+        value: enrollmentMode.slug,
+        disabled: false,
+      })
+    ));
     return modeList;
   };
 
   const submit = useCallback(() => {
     clear('changeEnrollments');
     setShowLoader(true);
-
-    const sendReason = reason === 'other' ? comments : reason;
-
+    setHideOnSubmit(true);
+    const sendReason = (reason === 'other') ? comments : reason;
     patchEnrollment({
       user,
       courseID: enrollment.courseId,
@@ -52,8 +51,9 @@ export default function ChangeEnrollmentForm({
       newMode: mode,
       reason: sendReason,
     }).then((result) => {
-      if (result.errors) {
-        result.errors.forEach((error) => add(error));
+      if (result.errors !== undefined) {
+        result.errors.forEach(error => add(error));
+        setHideOnSubmit(false);
       } else {
         const successMessage = {
           code: null,
@@ -62,71 +62,78 @@ export default function ChangeEnrollmentForm({
           type: 'success',
           topic: 'changeEnrollments',
         };
-        setHideOnSubmit(true);
         add(successMessage);
         changeHandler();
       }
       setShowLoader(false);
     });
-  }, [mode, reason, comments, user, enrollment, changeHandler, add, clear]);
+  });
 
   const changeEnrollmentForm = (
     <form>
       <AlertList topic="changeEnrollments" className="mb-3" />
       <div className="form-group">
+
         <div className="row small">
-          <div className="col-sm-6">Course Run ID</div>
-          <div className="col-sm-6">{enrollment.courseId}</div>
-        </div>
-        <hr />
-        <div className="row small">
-          <div className="col-sm-6">Mode</div>
-          <div className="col-sm-6">{enrollment.mode}</div>
-        </div>
-        <hr />
-        <div className="row small">
-          <div className="col-sm-6">Active</div>
-          <div className="col-sm-6">{enrollment.isActive.toString()}</div>
+          <div className="col-sm-6">
+            Course Run ID
+          </div>
+          <div className="col-sm-6">
+            {enrollment.courseId}
+          </div>
         </div>
         <hr />
 
-        <Form.Control
-          className="mb-n3"
-          as="select"
-          id="mode"
-          value={mode}
-          onChange={(e) => setMode(e.target.value)}
-          disabled={hideOnSubmit}
-        >
-          {getModes().map(({ label, value, disabled }) => (
-            <option key={value} value={value} disabled={disabled}>
-              {label}
-            </option>
-          ))}
-        </Form.Control>
+        <div className="row small">
+          <div className="col-sm-6">
+            Mode
+          </div>
+          <div className="col-sm-6">
+            {enrollment.mode}
+          </div>
+        </div>
+        <hr />
+
+        <div className="row small">
+          <div className="col-sm-6">
+            Active
+          </div>
+          <div className="col-sm-6">
+            {enrollment.isActive.toString()}
+          </div>
+        </div>
+        <hr />
 
         <Form.Control
           className="mb-4"
           as="select"
-          id="reason"
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
+          options={getModes()}
+          value={mode}
+          id="mode"
+          name="mode"
+          onChange={(event) => setMode(event.target.value)}
           disabled={hideOnSubmit}
         >
-          {reasons.map(({ label, value, disabled }) => (
-            <option key={value} value={value} disabled={disabled}>
-              {label}
-            </option>
-          ))}
+          {getModes().map(({ label, value, disabled }) => <option value={value} disabled={disabled}>{label}</option>)}
         </Form.Control>
-
+        <Form.Control
+          className="mb-4"
+          as="select"
+          id="reason"
+          name="reason"
+          value={reason}
+          onChange={(event) => setReason(event.target.value)}
+          disabled={hideOnSubmit}
+        >
+          {reasons.map(({ label, value, disabled }) => <option value={value} disabled={disabled}>{label}</option>)}
+        </Form.Control>
         <Form.Control
           placeholder="Explanation"
           as="textarea"
           id="comments"
           name="comments"
-          value={comments}
-          onChange={(e) => setComments(e.target.value)}
+          defaultValue=""
+          onChange={(event) => setComments(event.target.value)}
           disabled={hideOnSubmit}
           ref={forwardedRef}
         />
@@ -151,23 +158,29 @@ export default function ChangeEnrollmentForm({
           Change Enrollment
         </ModalDialog.Title>
       </ModalDialog.Header>
-      <ModalDialog.Body>{changeEnrollmentForm}</ModalDialog.Body>
+      <ModalDialog.Body>
+        {changeEnrollmentForm}
+      </ModalDialog.Body>
       <ModalDialog.Footer>
         <ActionRow>
-          <ModalDialog.CloseButton variant="link">Close</ModalDialog.CloseButton>
-          {showLoader ? (
-            <div className="spinner-border text-primary" role="status" />
-          ) : (
-            <Button
-              variant="primary"
-              disabled={!(mode && reason)}
-              className="mr-3"
-              onClick={submit}
-              hidden={hideOnSubmit}
-            >
-              Submit
-            </Button>
-          )}
+          <ModalDialog.CloseButton
+            variant="link"
+          >
+            Close
+          </ModalDialog.CloseButton>
+          {showLoader
+            ? (<div className="spinner-border text-primary" role="status" />)
+            : (
+              <Button
+                variant="primary"
+                disabled={!(mode && reason)}
+                className="mr-3"
+                onClick={submit}
+                hidden={hideOnSubmit}
+              >
+                Submit
+              </Button>
+            )},
         </ActionRow>
       </ModalDialog.Footer>
     </ModalDialog>
@@ -179,11 +192,7 @@ ChangeEnrollmentForm.propTypes = {
     courseId: PropTypes.string.isRequired,
     mode: PropTypes.string.isRequired,
     isActive: PropTypes.bool.isRequired,
-    courseModes: PropTypes.arrayOf(
-      PropTypes.shape({
-        slug: PropTypes.string.isRequired,
-      }),
-    ),
+    courseModes: PropTypes.shape([]),
   }),
   user: PropTypes.string.isRequired,
   closeHandler: PropTypes.func.isRequired,
@@ -196,7 +205,6 @@ ChangeEnrollmentForm.defaultProps = {
     courseId: '',
     mode: '',
     isActive: false,
-    courseModes: [],
   },
   forwardedRef: null,
 };

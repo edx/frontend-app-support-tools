@@ -6,7 +6,7 @@ import {
 import { AppProvider, ErrorPage } from '@edx/frontend-platform/react';
 import { getAuthenticatedUser } from '@edx/frontend-platform/auth';
 import React from 'react';
-import { createRoot } from 'react-dom/client';
+import ReactDOM from 'react-dom';
 import { Routes, Route } from 'react-router-dom';
 
 import { hasFeatureFlagEnabled } from '@edx/frontend-enterprise-utils';
@@ -34,22 +34,12 @@ import CustomerViewContainer from './Configuration/Customers/CustomerDetailView/
 
 const { CONFIGURATION, SUPPORT_TOOLS_TABS } = ROUTES;
 
-// Get root element and initialize once
-const rootElement = document.getElementById('root');
-let root = null;
-
-if (rootElement) {
-  root = createRoot(rootElement);
-}
-
 subscribe(APP_READY, () => {
   const { administrator } = getAuthenticatedUser();
-
   if (!administrator) {
-    root.render(<ErrorPage message="You do not have access to this page." />);
+    ReactDOM.render(<ErrorPage message="You do not have access to this page." />, document.getElementById('root'));
     return;
   }
-
   const configurationRoutes = [
     <Route
       key={uuidv4()}
@@ -82,7 +72,6 @@ subscribe(APP_READY, () => {
       element={<ConfigurationPage />}
     />,
   ];
-
   const customerRoutes = [
     <Route
       key={uuidv4()}
@@ -95,8 +84,7 @@ subscribe(APP_READY, () => {
       element={<CustomerViewContainer />}
     />,
   ];
-
-  root.render(
+  ReactDOM.render(
     <AppProvider>
       <UserMessagesProvider>
         <Head />
@@ -120,11 +108,12 @@ subscribe(APP_READY, () => {
         </Routes>
       </UserMessagesProvider>
     </AppProvider>,
+    document.getElementById('root'),
   );
 });
 
 subscribe(APP_INIT_ERROR, (error) => {
-  root.render(<ErrorPage message={error.message} />);
+  ReactDOM.render(<ErrorPage message={error.message} />, document.getElementById('root'));
 });
 
 initialize({
@@ -137,14 +126,10 @@ initialize({
         LICENSE_MANAGER_DJANGO_URL: process.env.LICENSE_MANAGER_DJANGO_URL || null,
         ADMIN_PORTAL_BASE_URL: process.env.ADMIN_PORTAL_BASE_URL || null,
         ENTERPRISE_ACCESS_BASE_URL: process.env.ENTERPRISE_ACCESS_BASE_URL || null,
-        FEATURE_CONFIGURATION_MANAGEMENT: process.env.FEATURE_CONFIGURATION_MANAGEMENT
-          || hasFeatureFlagEnabled('FEATURE_CONFIGURATION_MANAGEMENT') || null,
-        FEATURE_CONFIGURATION_ENTERPRISE_PROVISION: process.env.FEATURE_CONFIGURATION_ENTERPRISE_PROVISION
-          || hasFeatureFlagEnabled('FEATURE_CONFIGURATION_ENTERPRISE_PROVISION') || null,
-        FEATURE_CONFIGURATION_EDIT_ENTERPRISE_PROVISION: process.env.FEATURE_CONFIGURATION_EDIT_ENTERPRISE_PROVISION
-          || hasFeatureFlagEnabled('FEATURE_CONFIGURATION_EDIT_ENTERPRISE_PROVISION') || null,
-        FEATURE_CUSTOMER_SUPPORT_VIEW: process.env.FEATURE_CUSTOMER_SUPPORT_VIEW
-          || hasFeatureFlagEnabled('FEATURE_CUSTOMER_SUPPORT_VIEW') || null,
+        FEATURE_CONFIGURATION_MANAGEMENT: process.env.FEATURE_CONFIGURATION_MANAGEMENT || hasFeatureFlagEnabled('FEATURE_CONFIGURATION_MANAGEMENT') || null,
+        FEATURE_CONFIGURATION_ENTERPRISE_PROVISION: process.env.FEATURE_CONFIGURATION_ENTERPRISE_PROVISION || hasFeatureFlagEnabled('FEATURE_CONFIGURATION_ENTERPRISE_PROVISION') || null,
+        FEATURE_CONFIGURATION_EDIT_ENTERPRISE_PROVISION: process.env.FEATURE_CONFIGURATION_EDIT_ENTERPRISE_PROVISION || hasFeatureFlagEnabled('FEATURE_CONFIGURATION_EDIT_ENTERPRISE_PROVISION') || null,
+        FEATURE_CUSTOMER_SUPPORT_VIEW: process.env.FEATURE_CUSTOMER_SUPPORT_VIEW || hasFeatureFlagEnabled('FEATURE_CUSTOMER_SUPPORT_VIEW') || null,
         SUBSIDY_BASE_URL: process.env.SUBSIDY_BASE_URL || null,
         SUBSIDY_BASE_DJANGO_URL: process.env.SUBSIDY_BASE_DJANGO_URL || null,
       });

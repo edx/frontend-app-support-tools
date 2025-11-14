@@ -4,25 +4,33 @@ import getLinkProgramEnrollmentDetails from './data/api';
 import LinkProgramEnrollmentsTable from './LinkProgramEnrollmentsTable';
 
 export default function LinkProgramEnrollments() {
-  const [programID, setProgramID] = useState('');
-  const [usernamePairText, setUsernamePairText] = useState('');
-  const [successMessage, setSuccessMessage] = useState([]);
-  const [errorMessage, setErrorMessage] = useState([]);
+  const [programID, setProgramID] = useState(undefined);
+  const [usernamePairText, setUsernamePairText] = useState(undefined);
+  const [successMessage, setSuccessMessage] = useState(undefined);
+  const [errorMessage, setErrorMessage] = useState(undefined);
   const [isFetchingData, setIsFetchingData] = useState(false);
 
   const onProgramChange = (e) => {
-    setProgramID(e.currentTarget.value || '');
+    if (e.currentTarget.value) {
+      setProgramID(e.currentTarget.value);
+    } else {
+      setProgramID(undefined);
+    }
   };
 
   const onUserTextChange = (e) => {
-    setUsernamePairText(e.currentTarget.value || '');
+    if (e.currentTarget.value) {
+      setUsernamePairText(e.currentTarget.value);
+    } else {
+      setUsernamePairText(undefined);
+    }
   };
 
   const handleSubmit = () => {
     setIsFetchingData(true);
     getLinkProgramEnrollmentDetails({ programID, usernamePairText }).then((response) => {
-      setSuccessMessage(response.successes || []);
-      setErrorMessage(response.errors || []);
+      setSuccessMessage(response.successes);
+      setErrorMessage(response.errors);
       setIsFetchingData(false);
     });
   };
@@ -31,7 +39,7 @@ export default function LinkProgramEnrollments() {
     event.preventDefault();
     handleSubmit();
     return false;
-  }, [programID, usernamePairText]);
+  });
 
   return (
     <>
@@ -42,20 +50,22 @@ export default function LinkProgramEnrollments() {
             <Form.Label htmlFor="programUUID">Program UUID</Form.Label>
             <Form.Control
               name="programUUID"
-              value={programID}
+              defaultValue={programID}
               onChange={onProgramChange}
             />
           </Form.Group>
           <Form.Group className="my-4">
-            <Form.Label htmlFor="usernamePairText">
+            <Form.Label
+              htmlFor="usernamePairText"
+            >
               List of External key and username pairings (one per line)
             </Form.Label>
             <Form.Control
               name="usernamePairText"
               as="textarea"
               rows="10"
-              value={usernamePairText}
               onChange={onUserTextChange}
+              defaultValue={usernamePairText}
               placeholder="external_user_key,lms_username"
             />
           </Form.Group>
@@ -68,23 +78,8 @@ export default function LinkProgramEnrollments() {
           </Button>
         </Form>
       </section>
-
-      {/*  Error Message */}
-      {errorMessage && errorMessage.length > 0 && (
-        <div data-testid="error-message" className="text-danger my-3">
-          {errorMessage.join(', ')}
-        </div>
-      )}
-
-      {/*  Success Message */}
-      {successMessage && successMessage.length > 0 && (
-        <div data-testid="success" className="text-success my-3">
-          {successMessage.join(', ')}
-        </div>
-      )}
-
-      {/* Table Rendering */}
-      {(errorMessage.length > 0 || successMessage.length > 0) && (
+      {((errorMessage && errorMessage.length > 0)
+      || (successMessage && successMessage.length > 0)) && (
         <LinkProgramEnrollmentsTable
           successMessage={successMessage}
           errorMessage={errorMessage}

@@ -1,52 +1,45 @@
+import { mount } from 'enzyme';
 import React from 'react';
-import {
-  render,
-  screen,
-  waitFor,
-  fireEvent,
-  within,
-} from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { IntlProvider } from '@edx/frontend-platform/i18n';
-
+import { waitFor } from '@testing-library/react';
 import UserMessagesProvider from '../userMessages/UserMessagesProvider';
 import * as api from './data/api';
 import { credentials, noCredentials } from './data/test/credentials';
 import LearnerCredentials from './LearnerCredentials';
 
-const Wrapper = (props) => (
-  <IntlProvider locale="en">
-    <MemoryRouter>
-      <UserMessagesProvider>
-        <LearnerCredentials {...props} />
-      </UserMessagesProvider>
-    </MemoryRouter>
-  </IntlProvider>
+const LearnerCredentialsWrapper = (props) => (
+  <MemoryRouter>
+    <UserMessagesProvider>
+      <LearnerCredentials {...props} />
+    </UserMessagesProvider>
+  </MemoryRouter>
 );
 
 describe('Learner Credentials Tests', () => {
-  const username = 'edx';
+  let wrapper;
+  let apiMock;
+  const data = {
+    username: 'edx',
+  };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    if (apiMock) {
+      apiMock.mockReset();
+    }
   });
 
-  it('default page render with no credentials', async () => {
-    jest
+  it('default page render', async () => {
+    wrapper = mount(<LearnerCredentialsWrapper username={data.username} />);
+    apiMock = jest
       .spyOn(api, 'getUserProgramCredentials')
-      .mockResolvedValueOnce(noCredentials);
+      .mockImplementationOnce(() => Promise.resolve(noCredentials));
 
-    render(<Wrapper username={username} />);
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { level: 3 }))
-        .toHaveTextContent('Learner Credentials');
-      expect(screen.getByText('No Credentials were Found.'))
-        .toBeInTheDocument();
-    });
+    expect(wrapper.find('h3').text()).toEqual('Learner Credentials');
+    expect(wrapper.find('p').text()).toEqual('No Credentials were Found.');
+    wrapper.unmount();
   });
 
-  it('error render', async () => {
+  it('Error render', async () => {
     const expectedError = {
       errors: [
         {
@@ -58,79 +51,94 @@ describe('Learner Credentials Tests', () => {
         },
       ],
     };
-
-    jest
+    apiMock = jest
       .spyOn(api, 'getUserProgramCredentials')
-      .mockResolvedValueOnce(expectedError);
-
-    render(<Wrapper username={username} />);
-
-    await waitFor(() => {
-      expect(screen.getByRole('alert'))
-        .toHaveTextContent(expectedError.errors[0].text);
-    });
+      .mockImplementationOnce(() => Promise.resolve(expectedError));
+    wrapper = mount(<LearnerCredentialsWrapper username={data.username} />);
+    waitFor(() => expect(wrapper.find('.alert').text()).toEqual(expectedError.errors[0].text));
+    wrapper.unmount();
   });
 
-  it('credentials exist and render correctly', async () => {
-    jest
+  it('Credentials Exist', async () => {
+    apiMock = jest
       .spyOn(api, 'getUserProgramCredentials')
-      .mockResolvedValueOnce(credentials);
+      .mockImplementationOnce(() => Promise.resolve(credentials));
 
-    render(<Wrapper username={username} />);
+    wrapper = mount(<LearnerCredentialsWrapper username={data.username} />);
 
-    await waitFor(() => {
-      const headers = screen.getAllByRole('columnheader');
-      expect(headers[0]).toHaveTextContent('Credential Type');
-      expect(headers[1]).toHaveTextContent('Program ID');
-      expect(headers[2]).toHaveTextContent('Status');
-      expect(headers[3]).toHaveTextContent('Certificate Link');
-      expect(headers[4]).toHaveTextContent('Attributes');
+    const dataTable = wrapper.find('table.custom-table tr');
+    const headingRow = dataTable.at(0);
+    const dataRow = dataTable.at(1);
+
+    waitFor(() => {
+      expect(headingRow.find('th').at(0).text()).toEqual('Credential Type');
+      expect(headingRow.find('th').at(1).text()).toEqual('Program ID');
+      expect(headingRow.find('th').at(2).text()).toEqual('Status');
+      expect(headingRow.find('th').at(3).text()).toEqual('Certificate Link');
+      expect(headingRow.find('th').at(4).text()).toEqual('Attributes');
 
       const row = credentials.results[0];
-      const cells = screen.getAllByRole('cell');
-      expect(cells[0]).toHaveTextContent(row.credential.type);
-      expect(cells[1]).toHaveTextContent(row.credential.program_uuid);
-      expect(cells[2]).toHaveTextContent(row.status);
-      expect(cells[3].querySelector('a')).toHaveTextContent(row.uuid);
-      expect(cells[3].querySelector('a'))
-        .toHaveAttribute('href', row.certificate_url);
-      expect(cells[4].querySelector('button')).toHaveTextContent('Show');
+      expect(dataRow.find('td').at(0).text()).toEqual(row.credential.type);
+      expect(dataRow.find('td').at(1).text()).toEqual(
+        row.credential.program_uuid,
+      );
+      expect(dataRow.find('td').at(2).text()).toEqual(row.status);
+      expect(dataRow.find('td').at(3).find('a').text()).toEqual(row.uuid);
+      expect(dataRow.find('td').at(3).find('a').prop('href')).toEqual(
+        row.certificate_url,
+      );
+      expect(dataRow.find('td').at(4).find('button').text()).toEqual('Show');
     });
+    wrapper.unmount();
   });
 
-  it('attributes table toggles on Show/Hide click', async () => {
-    jest
+  it('Attributes Table', async () => {
+    apiMock = jest
       .spyOn(api, 'getUserProgramCredentials')
-      .mockResolvedValueOnce(credentials);
+      .mockImplementationOnce(() => Promise.resolve(credentials));
 
-    render(<Wrapper username={username} />);
+    wrapper = mount(<LearnerCredentialsWrapper username={data.username} />);
 
+    const attributeCell = wrapper
+      .find('table.custom-table tr')
+      .at(1)
+      .find('td')
+      .at(4);
     const row = credentials.results[0];
+    waitFor(() => {
+      expect(attributeCell.find('button').text()).toEqual('Show');
+      attributeCell.find('button').simulate('click');
+      attributeCell.update();
 
-    await waitFor(() => {
-      const toggleButton = screen.getByRole('button', { name: /Show/i });
-      expect(toggleButton).toBeInTheDocument();
-      fireEvent.click(toggleButton);
+      const updatedAttributeCell = wrapper
+        .find('table.custom-table tr')
+        .at(1)
+        .find('td')
+        .at(4);
+      expect(updatedAttributeCell.find('button').text()).toEqual('Hide');
+
+      const attributeTable = updatedAttributeCell.find('table.custom-table tr');
+      expect(attributeTable.at(0).find('th').at(0).text()).toEqual('Name');
+      expect(attributeTable.at(0).find('th').at(1).text()).toEqual('Value');
+      expect(attributeTable.at(1).find('td').at(0).text()).toEqual(
+        row.attributes[0].name,
+      );
+      expect(attributeTable.at(1).find('td').at(1).text()).toEqual(
+        row.attributes[0].value,
+      );
+
+      updatedAttributeCell.find('button').simulate('click');
+      updatedAttributeCell.update();
+      expect(
+        wrapper
+          .find('table.custom-table tr')
+          .at(1)
+          .find('td')
+          .at(4)
+          .find('button')
+          .text(),
+      ).toEqual('Show');
     });
-
-    await waitFor(() => {
-      const hideButton = screen.getByRole('button', { name: /Hide/i });
-      expect(hideButton).toBeInTheDocument();
-
-      const attributesTable = screen.getAllByRole('table')[1];
-      const attributeHeaders = within(attributesTable).getAllByRole('columnheader');
-      expect(attributeHeaders[0]).toHaveTextContent('Name');
-      expect(attributeHeaders[1]).toHaveTextContent('Value');
-
-      const attributeCells = within(attributesTable).getAllByRole('cell');
-      expect(attributeCells[0]).toHaveTextContent(row.attributes[0].name);
-      expect(attributeCells[1]).toHaveTextContent(row.attributes[0].value);
-
-      fireEvent.click(hideButton);
-    });
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Show/i })).toBeInTheDocument();
-    });
+    wrapper.unmount();
   });
 });

@@ -1,4 +1,5 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook } from '@testing-library/react-hooks';
+import { waitFor } from '@testing-library/react';
 
 import LmsApiService from '../../../../../data/services/EnterpriseApiService';
 import useCustomerUsersTableData from '../useCustomerUsersTableData';
@@ -13,12 +14,9 @@ describe('useCustomerUsersTableData', () => {
     };
     const { result } = renderHook(() => useCustomerUsersTableData(args));
     const { enterpriseUsersTableData } = result.current;
-    expect(enterpriseUsersTableData).toEqual({
-      itemCount: 0,
-      pageCount: 0,
-      results: [],
-    });
+    expect(enterpriseUsersTableData).toEqual({ itemCount: 0, pageCount: 0, results: [] });
 
+    // shouldn't fetch because its only 2 characters
     const searchArgs1 = {
       filters: [{ id: 'details', value: 'vi' }],
       sortBy: [{}],

@@ -1,4 +1,4 @@
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/extend-expect';
 import { screen, render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import SubsidyDetailViewContainer from '../SubsidyDetailViewContainer';
