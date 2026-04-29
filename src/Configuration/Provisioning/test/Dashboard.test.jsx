@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 import { fireEvent, screen, waitFor } from '@testing-library/react';
-import { renderWithRouter } from '@edx/frontend-enterprise-utils';
+import { renderWithRouter } from '@2uinc/frontend-enterprise-utils';
 import { useLocation } from 'react-router-dom';
 import Dashboard from '../Dashboard';
 import PROVISIONING_PAGE_TEXT, { toastText } from '../data/constants';

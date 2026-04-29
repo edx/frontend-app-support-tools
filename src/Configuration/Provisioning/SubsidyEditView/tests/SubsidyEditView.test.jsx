@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 import '@testing-library/jest-dom/extend-expect';
-import { renderWithRouter } from '@edx/frontend-enterprise-utils';
+import { renderWithRouter } from '@2uinc/frontend-enterprise-utils';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { initialStateValue, ProvisioningContext } from '../../../testData/Provisioning/ProvisioningContextWrapper';

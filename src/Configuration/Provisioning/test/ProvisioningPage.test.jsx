@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 import { fireEvent, screen } from '@testing-library/react';
-import { renderWithRouter } from '@edx/frontend-enterprise-utils';
+import { renderWithRouter } from '@2uinc/frontend-enterprise-utils';
 import { camelCaseObject } from '@edx/frontend-platform';
 import ROUTES from '../../../data/constants/routes';
 import PROVISIONING_PAGE_TEXT from '../data/constants';

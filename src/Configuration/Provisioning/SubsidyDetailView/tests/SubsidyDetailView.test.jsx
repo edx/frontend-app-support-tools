@@ -1,6 +1,6 @@
 import React from 'react';
 import { screen, waitFor } from '@testing-library/react';
-import { renderWithRouter } from '@edx/frontend-enterprise-utils';
+import { renderWithRouter } from '@2uinc/frontend-enterprise-utils';
 import '@testing-library/jest-dom/extend-expect';
 import SubsidyDetailView from '../SubsidyDetailView';
 import { initialStateValue, ProvisioningContext } from '../../../testData/Provisioning';

@@ -1,6 +1,6 @@
 const { createConfig } = require('@openedx/frontend-build');
 
-module.exports = createConfig('jest', {
+const config = createConfig('jest', {
   setupFiles: ['<rootDir>/src/setupTest.js'],
   collectCoverage: true,
   collectCoverageFrom: ['src/**/*.{js,jsx}'],
@@ -12,3 +12,10 @@ module.exports = createConfig('jest', {
     'src/supportHeader/ToggleVersion.jsx',
   ],
 });
+
+// @openedx/frontend-build's default transformIgnorePatterns only covers
+// @edx and @openedx scoped packages. Add @2uinc so Jest will transpile
+// those modules too.
+config.transformIgnorePatterns = ['node_modules/(?!@(open)?edx|@2uinc)'];
+
+module.exports = config;
