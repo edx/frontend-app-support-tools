@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 import { screen } from '@testing-library/react';
-import { renderWithRouter } from '@edx/frontend-enterprise-utils';
+import { renderWithRouter } from '@2uinc/frontend-enterprise-utils';
 import { initialStateValue, ProvisioningContext } from '../../../../testData/Provisioning';
 import ProvisioningFormCatalogContainer from '../ProvisioningFormCatalogContainer';
 import PROVISIONING_PAGE_TEXT from '../../../data/constants';

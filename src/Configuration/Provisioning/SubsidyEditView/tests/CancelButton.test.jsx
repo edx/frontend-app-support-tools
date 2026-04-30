@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { screen, waitFor } from '@testing-library/react';
 import Router from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
-import { renderWithRouter } from '@edx/frontend-enterprise-utils';
+import { renderWithRouter } from '@2uinc/frontend-enterprise-utils';
 import CancelButton from '../CancelButton';
 import PROVISIONING_PAGE_TEXT from '../../data/constants';
 import { hydratedInitialState, ProvisioningContext } from '../../../testData/Provisioning/ProvisioningContextWrapper';

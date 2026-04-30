@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { renderWithRouter } from '@edx/frontend-enterprise-utils';
+import { renderWithRouter } from '@2uinc/frontend-enterprise-utils';
 import { screen, act } from '@testing-library/react';
 import ProvisioningFormCustomCatalog from '../ProvisioningFormCustomCatalog';
 import { singlePolicy } from '../../../../testData';

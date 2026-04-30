@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import '@testing-library/jest-dom/extend-expect';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
-import { renderWithRouter } from '@edx/frontend-enterprise-utils';
+import { renderWithRouter } from '@2uinc/frontend-enterprise-utils';
 import SaveEditsButton from '../SaveEditsButton';
 import PROVISIONING_PAGE_TEXT from '../../data/constants';
 import { hydratedInitialState, ProvisioningContext } from '../../../testData/Provisioning/ProvisioningContextWrapper';

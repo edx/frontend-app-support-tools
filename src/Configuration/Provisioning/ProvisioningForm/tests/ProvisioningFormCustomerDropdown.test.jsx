@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { renderWithRouter } from '@edx/frontend-enterprise-utils';
+import { renderWithRouter } from '@2uinc/frontend-enterprise-utils';
 import { fireEvent, screen, act } from '@testing-library/react';
 import { ProvisioningContext, initialStateValue } from '../../../testData/Provisioning';
 import PROVISIONING_PAGE_TEXT from '../../data/constants';

@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { renderWithRouter } from '@edx/frontend-enterprise-utils';
+import { renderWithRouter } from '@2uinc/frontend-enterprise-utils';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import ProvisioningFormCatalog from '../ProvisioningFormCatalog';
 import { initialStateValue, ProvisioningContext } from '../../../../testData/Provisioning';

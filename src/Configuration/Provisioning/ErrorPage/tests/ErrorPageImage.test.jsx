@@ -1,4 +1,4 @@
-import { renderWithRouter } from '@edx/frontend-enterprise-utils';
+import { renderWithRouter } from '@2uinc/frontend-enterprise-utils';
 import { screen } from '@testing-library/react';
 import ErrorPageImage from '../ErrorPageImage';
 import ErrorPage from '../data/images/ErrorPage.svg';

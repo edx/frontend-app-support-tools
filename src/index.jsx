@@ -9,7 +9,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Routes, Route } from 'react-router-dom';
 
-import { hasFeatureFlagEnabled } from '@edx/frontend-enterprise-utils';
+import { hasFeatureFlagEnabled } from '@2uinc/frontend-enterprise-utils';
 import { v4 as uuidv4 } from 'uuid';
 import Header from './supportHeader';
 import messages from './i18n';

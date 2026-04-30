@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { renderWithRouter } from '@edx/frontend-enterprise-utils';
+import { renderWithRouter } from '@2uinc/frontend-enterprise-utils';
 import { screen } from '@testing-library/react';
 import ErrorPageMessage from '../ErrorPageMessage';
 import { ERROR_PAGE_TEXT } from '../data/constants';
