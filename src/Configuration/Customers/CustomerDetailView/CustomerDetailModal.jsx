@@ -19,6 +19,7 @@ const CustomerDetailModal = ({ customer, isOpen, close }) => {
       size="lg"
       hasCloseButton
       isFullscreenOnMobile
+      isOverflowVisible={false}
     >
       <ModalDialog.Header>
         <h1>
