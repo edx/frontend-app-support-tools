@@ -1,0 +1,88 @@
+// Mirrors CourseTeamManagement so the two tools read as one product. CTM's generic
+// classes (.sorted-header, .custom-table-*, .change-confirm-modal) are reused as-is —
+// every feature stylesheet is imported globally by src/index.scss. Paragon utilities
+// are applied at the call sites (mb-3, mr-2, p-2, text-gray-700, the flex trio); what
+// remains here is what no utility expresses — DataTable overrides and off-scale sizes.
+
+// 2.5rem sits between Paragon's mt-4.5 (2rem) and mt-5 (3rem).
+.course-bulk-unenroll-header {
+    margin-top: 2.5rem;
+}
+
+// Matches CTM's table title/description; bottom margin is `mb-3` at the call sites.
+.course-bulk-unenroll-section-title {
+    color: #000;
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.875rem;
+}
+
+// Colour (`text-gray-700`) and spacing (`mb-4.5`) are utilities at the call sites;
+// 1.125rem is Paragon's base size, leaving only the tighter line height.
+.course-bulk-unenroll-section-description {
+    line-height: 1.575rem;
+}
+
+// CTM control bar: hide Paragon's left actions and row count so tableActions owns it.
+.course-bulk-unenroll-table {
+    .pgn__data-table-actions-left {
+        display: none;
+    }
+
+    .pgn__data-table-status {
+        display: none;
+    }
+
+    .pgn__table-actions,
+    .pgn__data-table-actions-right,
+    .pgn__data-table-actions {
+        display: block;
+
+        p {
+            margin: 0;
+        }
+    }
+
+    .pgn__data-table-empty {
+        margin-left: .5rem;
+    }
+
+    th, td {
+        white-space: nowrap;
+    }
+
+    // Carries prose — wrap rather than scrolling the table for one long message.
+    td.error-cell {
+        white-space: normal;
+        min-width: 16rem;
+    }
+}
+
+.course-bulk-unenroll {
+    // Fixed label column so detail rows align like a table while a long reason
+    // still wraps. No utility covers flex-basis; the gutter is `mr-2`.
+    .bulk-unenroll-detail-label {
+        flex: 0 0 7rem;
+    }
+}
+
+// Matches CTM's status badge. The flex trio and p-2 are utilities at the call
+// sites; these are the sizes that are not on any scale.
+.course-bulk-unenroll-status-badge {
+    min-width: 4.375rem;
+    height: 1.5rem;
+    font-family: inherit;
+    font-size: .75rem;
+    font-weight: 500;
+    line-height: 1.25rem;
+}
+
+// Renders in a portal outside the page container, so top-level rather than nested
+// under .course-bulk-unenroll. Also carries CTM's .change-confirm-modal.
+.bulk-unenroll-confirm-modal {
+    .bulk-unenroll-confirm-count {
+        font-size: 2.5rem;
+        font-weight: 700;
+        line-height: 1.1;
+    }
+}

@@ -7,6 +7,8 @@ const ROUTES = {
       FEATURE_BASED_ENROLLMENTS: '/feature-based-enrollments',
       PROGRAM_ENROLLMENTS: '/program-enrollments',
       COURSE_TEAM_MANAGEMENT: '/course_team_management',
+      COURSE_BULK_UNENROLL: '/course_bulk_unenroll',
+      COURSE_BULK_UNENROLL_BATCHES: '/course_bulk_unenroll/batches',
     },
   },
   CONFIGURATION: {
