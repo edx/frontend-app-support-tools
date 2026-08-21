@@ -89,6 +89,7 @@ export default function Header() {
           <div className="mb-1"><a rel="noopener" href={`${config.DISCOVERY_API_BASE_URL}`}>Discovery</a></div>
           <div className="mb-1"><a rel="noopener" href={`${config.LMS_BASE_URL}/courses`}>Course Catalogue</a></div>
           <div className="mb-1"><a rel="noopener" href={`${config.BASE_URL}${SUPPORT_TOOLS_TABS.SUB_DIRECTORY.COURSE_TEAM_MANAGEMENT}`}>Manage Access</a></div>
+          <div className="mb-1"><a rel="noopener" href={`${config.BASE_URL}${SUPPORT_TOOLS_TABS.SUB_DIRECTORY.COURSE_BULK_UNENROLL}`}>Bulk Unenroll</a></div>
         </>
       ),
     },

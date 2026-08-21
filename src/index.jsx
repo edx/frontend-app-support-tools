@@ -19,6 +19,8 @@ import FBEIndexPage from './FeatureBasedEnrollments/FeatureBasedEnrollmentIndexP
 import UserMessagesProvider from './userMessages/UserMessagesProvider';
 import ProgramEnrollmentsIndexPage from './ProgramEnrollments/ProgramEnrollmentsIndexPage';
 import CourseTeamManagementIndexPage from './CourseTeamManagement/CourseTeamManagementIndexPage';
+import CourseBulkUnenrollIndexPage from './CourseBulkUnenroll/CourseBulkUnenrollIndexPage';
+import CourseBulkUnenrollBatchesPage from './CourseBulkUnenroll/CourseBulkUnenrollBatchesPage';
 import Head from './head/Head';
 import CustomersPage from './Configuration/Customers/CustomerDataTable/CustomersPage';
 
@@ -104,6 +106,14 @@ subscribe(APP_READY, () => {
           <Route
             path={SUPPORT_TOOLS_TABS.SUB_DIRECTORY.COURSE_TEAM_MANAGEMENT}
             element={<CourseTeamManagementIndexPage />}
+          />
+          <Route
+            path={SUPPORT_TOOLS_TABS.SUB_DIRECTORY.COURSE_BULK_UNENROLL_BATCHES}
+            element={<CourseBulkUnenrollBatchesPage />}
+          />
+          <Route
+            path={SUPPORT_TOOLS_TABS.SUB_DIRECTORY.COURSE_BULK_UNENROLL}
+            element={<CourseBulkUnenrollIndexPage />}
           />
         </Routes>
       </UserMessagesProvider>
