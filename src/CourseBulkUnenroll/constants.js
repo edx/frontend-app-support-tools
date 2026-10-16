@@ -100,12 +100,14 @@ export const PREVIEW_FILTER = {
   ALL: ALL_FILTER_VALUE,
   VALID: 'valid',
   NOT_FOUND: 'not_found',
+  EXEC_ED: 'exec_ed',
 };
 
 export const PREVIEW_FILTER_OPTIONS = [
   { value: PREVIEW_FILTER.ALL, label: messages.filterAll },
   { value: PREVIEW_FILTER.VALID, label: messages.filterValid },
   { value: PREVIEW_FILTER.NOT_FOUND, label: messages.filterNotFound },
+  { value: PREVIEW_FILTER.EXEC_ED, label: messages.filterExecEd },
 ];
 
 // Sent as `page_size` *and* used for the table's page-count maths; the two must

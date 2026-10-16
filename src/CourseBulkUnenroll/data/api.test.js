@@ -101,7 +101,15 @@ describe('Bulk Unenroll API', () => {
 
       expect(result.state).toEqual('pending');
       expect(mockAdapter.history.post).toHaveLength(1);
-      expect(JSON.parse(mockAdapter.history.post[0].data)).toEqual({ reason: 'partner offboarding' });
+      expect(JSON.parse(mockAdapter.history.post[0].data)).toEqual({ reason: 'partner offboarding', confirm_exec_ed: false });
+    });
+
+    it('sends confirm_exec_ed when the operator confirmed Exec Ed / Bootcamp runs', async () => {
+      mockAdapter.onPost(`${base}/${batchId}/confirm/`).reply(202, { batch_id: batchId, state: 'pending' });
+
+      await confirmBulkUnenrollBatch(batchId, 'partner offboarding', intl, true);
+
+      expect(JSON.parse(mockAdapter.history.post[0].data)).toEqual({ reason: 'partner offboarding', confirm_exec_ed: true });
     });
 
     it('surfaces a blank-reason rejection from the server', async () => {

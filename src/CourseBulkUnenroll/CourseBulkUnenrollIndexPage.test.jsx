@@ -240,6 +240,34 @@ describe('CourseBulkUnenrollIndexPage — preview table controls', () => {
     expect(screen.getByTestId('bulk-unenroll-table-count')).toHaveTextContent('1');
   });
 
+  it('warns when the file contains Executive Education runs and can isolate them', async () => {
+    await showPreview({
+      ...previewResponse,
+      courses: [
+        {
+          course_id: 'course-v1:edX+A+B', active_count: 4000, state: 'pending', error: '', exec_ed: false,
+        },
+        {
+          course_id: 'course-v1:MITx+AI+1T2026c', active_count: 200, state: 'pending', error: '', exec_ed: true,
+        },
+      ],
+    });
+
+    expect(screen.getByTestId('bulk-unenroll-exec-ed-warning')).toHaveTextContent('1 of these courses is an Executive Education or Bootcamp course run.');
+
+    await userEvent.click(screen.getByTestId('bulk-unenroll-preview-filter'));
+    await userEvent.click(screen.getByTestId('bulk-unenroll-preview-filter-item-exec_ed'));
+
+    await waitFor(() => expect(screen.queryByText('course-v1:edX+A+B')).not.toBeInTheDocument());
+    expect(screen.getByText('course-v1:MITx+AI+1T2026c')).toBeInTheDocument();
+    expect(screen.getByTestId('bulk-unenroll-table-count')).toHaveTextContent('1');
+  });
+
+  it('shows no Executive Education warning when none are present', async () => {
+    await showPreview(previewResponse);
+    expect(screen.queryByTestId('bulk-unenroll-exec-ed-warning')).not.toBeInTheDocument();
+  });
+
   it('keeps the rows in the order the CSV listed them', async () => {
     // Not sortable: the file gets fixed in the order it was written, so reordering
     // costs the operator the line they are looking for.
@@ -287,7 +315,7 @@ describe('CourseBulkUnenrollIndexPage — reason and confirm', () => {
 
     await userEvent.click(screen.getByTestId('bulk-unenroll-confirm-submit'));
 
-    await waitFor(() => expect(api.confirmBulkUnenrollBatch).toHaveBeenCalledWith(BATCH_ID, 'cleanup', expect.anything()));
+    await waitFor(() => expect(api.confirmBulkUnenrollBatch).toHaveBeenCalledWith(BATCH_ID, 'cleanup', expect.anything(), false));
     // Rests on `complete` for a beat so the operator sees an irreversible action
     // land rather than the screen swapping under them.
     expect(await screen.findByText('Started')).toBeInTheDocument();
@@ -321,6 +349,74 @@ describe('CourseBulkUnenrollIndexPage — reason and confirm', () => {
     await userEvent.click(screen.getByTestId('bulk-unenroll-confirm-cancel'));
 
     expect(api.confirmBulkUnenrollBatch).not.toHaveBeenCalled();
+  });
+
+  it('asks again in the modal when Executive Education runs are included', async () => {
+    api.uploadBulkUnenrollFile.mockResolvedValue({
+      ...previewResponse,
+      totals: { active: 0 },
+      courses: [
+        {
+          course_id: 'course-v1:edX+A+B', active_count: 0, state: 'pending', error: '', exec_ed: false,
+        },
+        {
+          course_id: 'course-v1:MITx+AI+1T2026c', active_count: 0, state: 'pending', error: '', exec_ed: true,
+        },
+      ],
+    });
+    renderPage();
+    await userEvent.upload(screen.getByTestId('bulk-unenroll-file-input'), csvFile());
+    await userEvent.click(screen.getByTestId('bulk-unenroll-upload-button'));
+    await screen.findByTestId('bulk-unenroll-preview');
+
+    await userEvent.type(screen.getByTestId('bulk-unenroll-reason-input'), 'offboarding');
+    await userEvent.click(screen.getByTestId('bulk-unenroll-open-confirm'));
+
+    const modal = await screen.findByTestId('bulk-unenroll-confirm-modal');
+    expect(within(modal).getByTestId('bulk-unenroll-confirm-exec-ed-warning')).toHaveTextContent('This list includes 1 Executive Education or Bootcamp course. Are you sure');
+    // Still confirmable: the ticket asks for a warning and a second look, not a block.
+    expect(within(modal).getByTestId('bulk-unenroll-confirm-submit')).not.toBeDisabled();
+
+    // The modal is the second look, so confirming from it carries the server's required flag.
+    api.confirmBulkUnenrollBatch.mockResolvedValue({ batch_id: BATCH_ID, state: 'pending' });
+    api.getBulkUnenrollBatchStatus.mockResolvedValue(statusResponse());
+    await userEvent.click(within(modal).getByTestId('bulk-unenroll-confirm-submit'));
+    await waitFor(() => expect(api.confirmBulkUnenrollBatch).toHaveBeenCalledWith(BATCH_ID, 'offboarding', expect.anything(), true));
+  });
+
+  it('uses the plural wording when more than one Executive Education run is included', async () => {
+    api.uploadBulkUnenrollFile.mockResolvedValue({
+      ...previewResponse,
+      courses: [
+        {
+          course_id: 'course-v1:MITx+AI+1T2026c', active_count: 200, state: 'pending', error: '', exec_ed: true,
+        },
+        {
+          course_id: 'course-v1:MITx+AHC+3T2026', active_count: 100, state: 'pending', error: '', exec_ed: true,
+        },
+      ],
+    });
+    renderPage();
+    await userEvent.upload(screen.getByTestId('bulk-unenroll-file-input'), csvFile());
+    await userEvent.click(screen.getByTestId('bulk-unenroll-upload-button'));
+    await screen.findByTestId('bulk-unenroll-preview');
+
+    expect(screen.getByTestId('bulk-unenroll-exec-ed-warning')).toHaveTextContent('2 of these courses are Executive Education or Bootcamp course runs.');
+
+    await userEvent.type(screen.getByTestId('bulk-unenroll-reason-input'), 'offboarding');
+    await userEvent.click(screen.getByTestId('bulk-unenroll-open-confirm'));
+
+    const modal = await screen.findByTestId('bulk-unenroll-confirm-modal');
+    expect(within(modal).getByTestId('bulk-unenroll-confirm-exec-ed-warning')).toHaveTextContent('This list includes 2 Executive Education or Bootcamp courses. Are you sure');
+  });
+
+  it('shows no Executive Education line in the modal when none are included', async () => {
+    await getToPreview();
+    await userEvent.type(screen.getByTestId('bulk-unenroll-reason-input'), 'cleanup');
+    await userEvent.click(screen.getByTestId('bulk-unenroll-open-confirm'));
+
+    const modal = await screen.findByTestId('bulk-unenroll-confirm-modal');
+    expect(within(modal).queryByTestId('bulk-unenroll-confirm-exec-ed-warning')).not.toBeInTheDocument();
   });
 });
 

@@ -117,8 +117,12 @@ export function listBulkUnenrollBatches(options, intl) {
  * Confirm a validated batch and start the work. The reason is collected here,
  * not at upload, so the operator sees the preview before justifying the action.
  */
-export function confirmBulkUnenrollBatch(batchId, reason, intl) {
-  return request(intl, messages.confirmError, (client) => client.post(`${baseUrl()}/${batchId}/confirm/`, { reason }));
+export function confirmBulkUnenrollBatch(batchId, reason, intl, confirmExecEd = false) {
+  // The server refuses a batch with Exec Ed / Bootcamp runs unless this is true (LP-1362).
+  return request(intl, messages.confirmError, (client) => client.post(
+    `${baseUrl()}/${batchId}/confirm/`,
+    { reason, confirm_exec_ed: confirmExecEd },
+  ));
 }
 
 /**

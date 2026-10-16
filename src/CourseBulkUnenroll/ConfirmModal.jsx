@@ -14,7 +14,7 @@ import messages from './messages';
  * decision, and a number set in body text is easy to skim past.
  */
 export default function ConfirmModal({
-  isOpen, onConfirm, onCancel, courseCount, learnerCount, submitState, positionRef,
+  isOpen, onConfirm, onCancel, courseCount, learnerCount, submitState, positionRef, execEdCount,
 }) {
   const intl = useIntl();
   const isSettling = submitState === 'pending' || submitState === 'complete';
@@ -45,6 +45,11 @@ export default function ConfirmModal({
             courses: courseCount.toLocaleString(),
           })}
         </p>
+        {execEdCount > 0 && (
+          <p className="mb-3 font-weight-bold text-danger" data-testid="bulk-unenroll-confirm-exec-ed-warning">
+            {intl.formatMessage(messages.confirmModalExecEdWarning, { count: execEdCount })}
+          </p>
+        )}
         <div className="mb-3 section-divider-2" />
 
         <div className="d-flex justify-content-end align-items-center">
@@ -86,8 +91,10 @@ ConfirmModal.propTypes = {
   learnerCount: PropTypes.number.isRequired,
   submitState: PropTypes.string.isRequired,
   positionRef: PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+  execEdCount: PropTypes.number,
 };
 
 ConfirmModal.defaultProps = {
   positionRef: undefined,
+  execEdCount: 0,
 };
