@@ -222,6 +222,21 @@ const messages = defineMessages({
     defaultMessage: 'Not found',
     description: 'Preview filter choice for course IDs the server could not find',
   },
+  filterExecEd: {
+    id: 'courseBulkUnenrollFilterExecEd',
+    defaultMessage: 'Executive Education / Bootcamp',
+    description: 'Preview filter choice for Executive Education and Bootcamp course runs',
+  },
+  previewExecEdWarning: {
+    id: 'courseBulkUnenrollPreviewExecEdWarning',
+    defaultMessage: '{count, plural, one {# of these courses is an Executive Education or Bootcamp course run.} other {# of these courses are Executive Education or Bootcamp course runs.}} Unenrolling these learners also cancels their seats with the delivery partner and can trigger learner-credit refunds. Use the filter to review them before confirming.',
+    description: 'Warning above the preview table when the CSV contains Executive Education or Bootcamp runs',
+  },
+  confirmModalExecEdWarning: {
+    id: 'courseBulkUnenrollConfirmModalExecEdWarning',
+    defaultMessage: 'This list includes {count, plural, one {# Executive Education or Bootcamp course} other {# Executive Education or Bootcamp courses}}. Are you sure you want to perform this unenrollment?',
+    description: 'Extra warning line in the confirm modal when Executive Education or Bootcamp runs are included',
+  },
   stateValidated: {
     id: 'courseBulkUnenrollStateValidated',
     defaultMessage: 'Validated',

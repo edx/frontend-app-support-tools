@@ -23,7 +23,9 @@ import {
  * box and filter. That filter also catches a trap — an all-unknown CSV previews as
  * "0 learners across N courses", which reads as "nothing to do".
  */
-export default function PreviewPanel({ courses, errors, totalLearners }) {
+export default function PreviewPanel({
+  courses, errors, totalLearners, execEdCount,
+}) {
   const intl = useIntl();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState(ALL_FILTER_VALUE);
@@ -35,6 +37,7 @@ export default function PreviewPanel({ courses, errors, totalLearners }) {
       const matchesSearch = !term || (row.course_id || '').toLowerCase().includes(term);
       if (filter === PREVIEW_FILTER.VALID) { return matchesSearch && !row.error; }
       if (filter === PREVIEW_FILTER.NOT_FOUND) { return matchesSearch && !!row.error; }
+      if (filter === PREVIEW_FILTER.EXEC_ED) { return matchesSearch && !!row.exec_ed; }
       return matchesSearch;
     });
   }, [courses, search, filter]);
@@ -85,6 +88,16 @@ export default function PreviewPanel({ courses, errors, totalLearners }) {
           })}
         </p>
       </div>
+
+      {execEdCount > 0 && (
+        <Suspense key="BulkUnenrollExecEdWarning" fallback={null}>
+          <Alert type="error">
+            <div data-testid="bulk-unenroll-exec-ed-warning">
+              {intl.formatMessage(messages.previewExecEdWarning, { count: execEdCount })}
+            </div>
+          </Alert>
+        </Suspense>
+      )}
 
       {errors.length > 0 && (
         <Suspense key="BulkUnenrollRejectedRows" fallback={null}>
@@ -151,6 +164,7 @@ PreviewPanel.propTypes = {
     course_id: PropTypes.string,
     active_count: PropTypes.number,
     error: PropTypes.string,
+    exec_ed: PropTypes.bool,
   })).isRequired,
   errors: PropTypes.arrayOf(PropTypes.shape({
     row: PropTypes.number,
@@ -158,4 +172,5 @@ PreviewPanel.propTypes = {
     error: PropTypes.string,
   })).isRequired,
   totalLearners: PropTypes.number.isRequired,
+  execEdCount: PropTypes.number.isRequired,
 };

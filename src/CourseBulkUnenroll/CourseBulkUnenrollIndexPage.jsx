@@ -91,9 +91,11 @@ export default function CourseBulkUnenrollIndexPage() {
     if (completeTimerRef.current) { clearTimeout(completeTimerRef.current); }
   }, []);
 
+  const execEdCount = (preview?.courses ?? []).filter((course) => course.exec_ed).length;
+
   const handleConfirm = async () => {
     setSubmitState('pending');
-    const result = await confirmBulkUnenrollBatch(preview.batch_id, reason.trim(), intl);
+    const result = await confirmBulkUnenrollBatch(preview.batch_id, reason.trim(), intl, execEdCount > 0);
     if (result?.isApiError) {
       setSubmitState('default');
       showApiError(result);
@@ -250,6 +252,7 @@ export default function CourseBulkUnenrollIndexPage() {
             courses={preview.courses ?? []}
             errors={preview.errors ?? []}
             totalLearners={preview.totals?.active ?? 0}
+            execEdCount={execEdCount}
           />
 
           <Form.Group className="mt-4">
@@ -298,6 +301,7 @@ export default function CourseBulkUnenrollIndexPage() {
             onCancel={() => setIsModalOpen(false)}
             courseCount={(preview.courses ?? []).length}
             learnerCount={preview.totals?.active ?? 0}
+            execEdCount={execEdCount}
             submitState={submitState}
             positionRef={confirmButtonRef}
           />
