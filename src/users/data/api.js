@@ -530,6 +530,13 @@ export async function patchEnrollment({
   }
 }
 
+export async function postActivateAccount(userIdentifier) {
+  const { data } = await getAuthenticatedHttpClient().post(
+    AppUrls.getActivateAccountUrl(userIdentifier),
+  );
+  return data;
+}
+
 export async function postTogglePasswordStatus(user, comment) {
   const { data } = await getAuthenticatedHttpClient().post(
     AppUrls.getTogglePasswordStatusUrl(user),
