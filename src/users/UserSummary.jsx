@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { formatDate } from '../utils';
-import { getAccountActivationUrl } from './data/urls';
+import ActivateAccount from './ActivateAccount';
 import OnboardingStatus from './OnboardingStatus';
 import VerifiedName from './VerifiedName';
 import AccountActions from './account-actions/AccountActions';
@@ -47,18 +47,16 @@ export default function UserSummary({
                 </tr>
 
                 <tr>
-                  <th>{!userData.isActive ? 'Confirmation Link' : 'Confirmed'}</th>
+                  <th>Confirmed</th>
                   <td>
-                    {
-                    // eslint-disable-next-line no-nested-ternary
-                    userData.isActive
+                    {userData.isActive
                       ? 'yes'
                       : (
-                        userData.activationKey !== null
-                          ? <a href={getAccountActivationUrl(userData.activationKey)} rel="noopener noreferrer" target="_blank" className="word_break">{userData.activationKey}</a>
-                          : 'N/A'
-                      )
-                    }
+                        <>
+                          No
+                          <ActivateAccount username={userData.username} changeHandler={changeHandler} />
+                        </>
+                      )}
                   </td>
                 </tr>
 
@@ -111,7 +109,6 @@ UserSummary.propTypes = {
     username: PropTypes.string,
     id: PropTypes.number,
     email: PropTypes.string,
-    activationKey: PropTypes.string,
     isActive: PropTypes.bool,
     country: PropTypes.string,
     dateJoined: PropTypes.string,

@@ -109,47 +109,29 @@ describe('User Summary Component Tests', () => {
     });
   });
 
-  describe('Registration Activation Field', () => {
-    const getActivationKeyRow = (data) => {
+  describe('Account Confirmation Field', () => {
+    const getConfirmationRow = (data) => {
       mountUserSummaryWrapper(data);
       const dataTable = wrapper.find('#account-table table');
-      const rowName = dataTable.find('tbody tr').at(5).find('th').at(0);
-      const rowValue = dataTable.find('tbody tr').at(5).find('td').at(0);
-
-      return {
-        rowName,
-        rowValue,
-      };
+      const row = dataTable.find('tbody tr').at(5);
+      return { rowName: row.find('th').at(0), rowValue: row.find('td').at(0) };
     };
 
-    it('Active User Data', () => {
-      const { rowName, rowValue } = getActivationKeyRow(UserSummaryData);
-      expect(rowName.text()).not.toEqual('Confirmation Link');
-      expect(rowValue.text()).not.toEqual(UserSummaryData.userData.activationKey);
+    it('shows "yes" and no activate button for a confirmed account', () => {
+      const { rowName, rowValue } = getConfirmationRow(UserSummaryData);
+      expect(rowName.text()).toEqual('Confirmed');
+      expect(rowValue.text()).toEqual('yes');
+      expect(rowValue.find('button#activate-account').exists()).toBeFalsy();
     });
 
-    it('Inactive User Data ', () => {
-      const InActiveUserData = { ...UserSummaryData.userData, isActive: false };
-      const InActiveUserSummaryData = { ...UserSummaryData, userData: InActiveUserData };
-      const { rowName, rowValue } = getActivationKeyRow(InActiveUserSummaryData);
-      expect(rowName.text()).toEqual('Confirmation Link');
-      expect(rowValue.text()).toEqual(UserSummaryData.userData.activationKey);
-    });
-
-    it('Active User With No Registration Data ', () => {
-      const InActiveUserData = { ...UserSummaryData.userData, activationKey: null };
-      const InActiveUserSummaryData = { ...UserSummaryData, userData: InActiveUserData };
-      const { rowName, rowValue } = getActivationKeyRow(InActiveUserSummaryData);
-      expect(rowName.text()).not.toEqual('Confirmation Link');
-      expect(rowValue.text()).not.toEqual(UserSummaryData.userData.activationKey);
-    });
-
-    it('Inactive User With No Registration Data ', () => {
-      const InActiveUserData = { ...UserSummaryData.userData, activationKey: null, isActive: false };
-      const InActiveUserSummaryData = { ...UserSummaryData, userData: InActiveUserData };
-      const { rowName, rowValue } = getActivationKeyRow(InActiveUserSummaryData);
-      expect(rowName.text()).toEqual('Confirmation Link');
-      expect(rowValue.text()).toEqual('N/A');
+    it('shows "No" and an Activate account button for an unconfirmed account', () => {
+      const unconfirmed = { ...UserSummaryData, userData: { ...UserSummaryData.userData, isActive: false } };
+      const { rowName, rowValue } = getConfirmationRow(unconfirmed);
+      expect(rowName.text()).toEqual('Confirmed');
+      expect(rowValue.text()).toContain('No');
+      expect(rowValue.find('button#activate-account').text()).toEqual('Activate account');
+      // No activation link or key is rendered anywhere.
+      expect(rowValue.find('a').exists()).toBeFalsy();
     });
   });
 });
